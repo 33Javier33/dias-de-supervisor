@@ -5,7 +5,73 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calendario de Trabajo</title>
     <style>
-        /* Estilos Generales */
+        /* --- Tema Claro (Predeterminado) y Variables Globales --- */
+        :root {
+            --bg-color: #f0f2f5;
+            --container-bg: #ffffff;
+            --text-color: #333;
+            --text-color-secondary: #555;
+            --text-color-muted: #6a7c8d;
+            --border-color: #e0e6ed;
+            --border-color-light: #e9edf2;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --header-text-color: #2c3e50;
+            --button-bg: #007bff;
+            --button-hover-bg: #0056b3;
+            --button-text-color: #ffffff;
+            --report-btn-bg: #28a745;
+            --report-btn-hover-bg: #218838;
+            --data-btn-bg: #6c757d;
+            --data-btn-hover-bg: #5a6268;
+            --day-empty-bg: #f7f9fc;
+            --day-empty-border: #f0f2f5;
+            --day-default-bg: #fdfefe;
+            --day-default-border: #e9edf2;
+            --status-supervisor-bg: #e0f2f7;
+            --status-supervisor-border: #b3e0ed;
+            --status-supervisor-text: #005f73;
+            --status-crupier-bg: #e6ffe6;
+            --status-crupier-border: #b3f0b3;
+            --status-crupier-text: #2d6b3d;
+            --input-bg: #f8f9fa;
+            --input-border: #ced4da;
+            --report-output-bg: #e9ecef;
+        }
+
+        /* --- Tema Oscuro --- */
+        body.dark-mode {
+            --bg-color: #121212;
+            --container-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --text-color-secondary: #b0b0b0;
+            --text-color-muted: #888888;
+            --border-color: #3a3a3a;
+            --border-color-light: #2c2c2c;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --header-text-color: #ffffff;
+            --button-bg: #007bff;
+            --button-hover-bg: #0056b3;
+            --button-text-color: #ffffff;
+            --report-btn-bg: #28a745;
+            --report-btn-hover-bg: #218838;
+            --data-btn-bg: #5a6268;
+            --data-btn-hover-bg: #494f54;
+            --day-empty-bg: #1a1a1a;
+            --day-empty-border: #121212;
+            --day-default-bg: #2c2c2c;
+            --day-default-border: #3a3a3a;
+            --status-supervisor-bg: #003f5c;
+            --status-supervisor-border: #005f73;
+            --status-supervisor-text: #a7d8e8;
+            --status-crupier-bg: #1e4620;
+            --status-crupier-border: #2d6b3d;
+            --status-crupier-text: #b3f0b3;
+            --input-bg: #333333;
+            --input-border: #555555;
+            --report-output-bg: #252525;
+        }
+
+        /* --- Estilos Generales --- */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -13,38 +79,45 @@
             justify-content: flex-start;
             align-items: center;
             min-height: 100vh;
-            background-color: #f0f2f5;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             padding: 20px;
-            color: #333;
             margin: 0;
             box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s;
         }
 
-        /* Contenedor Principal del Calendario */
-        .calendar-container {
-            background-color: #ffffff;
+        /* --- Contenedores Principales --- */
+        .calendar-container, .data-management-container, .report-section {
+            background-color: var(--container-bg);
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 20px var(--shadow-color);
             padding: 25px;
             width: 100%;
             max-width: 580px;
             min-width: 320px;
             box-sizing: border-box;
-            transition: all 0.3s ease;
+            transition: background-color 0.3s;
             margin-bottom: 20px;
         }
 
-        /* Encabezado del Calendario (Mes y Año, Botones de Navegación) */
+        /* --- Encabezado del Calendario --- */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 25px;
         }
-
+        .header h2 {
+            margin: 0;
+            font-size: 2em;
+            color: var(--header-text-color);
+            text-align: center;
+            flex-grow: 1;
+        }
         .header button {
-            background-color: #007bff;
-            color: white;
+            background-color: var(--button-bg);
+            color: var(--button-text-color);
             border: none;
             padding: 10px 18px;
             border-radius: 8px;
@@ -52,399 +125,178 @@
             font-size: 1.1em;
             font-weight: bold;
             transition: background-color 0.3s ease, transform 0.1s ease;
-            box-shadow: 0 2px 5px rgba(0, 123, 255, 0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
-
         .header button:hover {
-            background-color: #0056b3;
+            background-color: var(--button-hover-bg);
             transform: translateY(-1px);
         }
-
-        .header h2 {
-            margin: 0;
-            font-size: 2em;
-            color: #2c3e50;
-            text-align: center;
-            flex-grow: 1;
+        #themeToggle {
+            background-color: transparent;
+            font-size: 1.5em;
+            padding: 5px 10px;
+            box-shadow: none;
+            color: var(--text-color);
+            order: -1;
         }
 
-        /* Días de la Semana */
+        /* --- Días del Calendario --- */
         .weekdays {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             font-weight: bold;
-            color: #6a7c8d;
+            color: var(--text-color-muted);
             text-align: center;
             padding-bottom: 12px;
-            border-bottom: 1px solid #e0e6ed;
+            border-bottom: 1px solid var(--border-color);
             margin-bottom: 15px;
-            font-size: 0.95em;
         }
-
-        /* Cuadrícula de los Días del Mes */
         .day-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             gap: 5px;
         }
-
-        /* Estilo Individual de Cada Día */
         .day {
-            background-color: #fdfefe;
-            border: 1px solid #e9edf2;
+            background-color: var(--day-default-bg);
+            border: 1px solid var(--day-default-border);
             border-radius: 8px;
-            padding: 10px 5px;
-            text-align: center;
-            cursor: pointer;
-            min-height: 0;
             padding-bottom: 100%;
             position: relative;
-
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-
-            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
-            box-sizing: border-box;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease, border-color 0.2s;
         }
-
         .day:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px var(--shadow-color);
         }
-
-        /* Días Vacíos (del mes anterior/siguiente) */
         .day.empty {
-            background-color: #f7f9fc;
+            background-color: var(--day-empty-bg);
+            border-color: var(--day-empty-border);
             cursor: default;
             pointer-events: none;
-            border-color: #f0f2f5;
         }
-
-        /* Contenido del día (número y texto de estado) */
         .day-content {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 4px;
-            box-sizing: border-box;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: space-between;
+            align-items: center; padding: 8px 4px; box-sizing: border-box;
         }
-
-        /* Número del Día */
-        .day .day-number {
-            font-size: 1.3em;
-            font-weight: bold;
-            color: #333;
-            line-height: 1;
-            margin-bottom: 0;
-        }
-
-        /* Texto del Estado (Supervisor/Crupier) */
+        .day .day-number { font-size: 1.3em; font-weight: bold; color: var(--text-color); }
         .day .status-text {
-            font-size: 0.8em;
-            font-weight: 600;
-            color: #555;
-            text-align: center;
-            width: 100%;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 100%;
-            box-sizing: border-box;
-            padding-top: 2px;
+            font-size: 0.8em; font-weight: 600; color: var(--text-color-secondary);
+            text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
+        .status-libre { background-color: var(--day-default-bg); border-color: var(--day-default-border); }
+        .status-supervisor { background-color: var(--status-supervisor-bg); border-color: var(--status-supervisor-border); }
+        .status-supervisor .status-text, .status-supervisor .day-number { color: var(--status-supervisor-text); }
+        .status-crupier { background-color: var(--status-crupier-bg); border-color: var(--status-crupier-border); }
+        .status-crupier .status-text, .status-crupier .day-number { color: var(--status-crupier-text); }
 
-        /* Colores para los estados */
-        .status-libre {
-            background-color: #fdfefe;
-            border-color: #e9edf2;
-        }
-
-        .status-supervisor {
-            background-color: #e0f2f7;
-            border-color: #b3e0ed;
-            color: #005f73;
-        }
-
-        .status-crupier {
-            background-color: #e6ffe6;
-            border-color: #b3f0b3;
-            color: #2d6b3d;
-        }
-
-        /* --- Estilos para el Historial --- */
-        .history-container {
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            padding: 20px;
-            width: 100%;
-            max-width: 580px;
-            min-width: 320px;
-            box-sizing: border-box;
-            margin-top: 20px;
-        }
-
-        .history-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e0e6ed;
-            margin-bottom: 10px;
-        }
-
-        .history-header h3 {
-            margin: 0;
-            color: #2c3e50;
-            font-size: 1.5em;
-        }
-
-        .history-header .toggle-icon {
-            font-size: 1.8em;
-            font-weight: bold;
-            transition: transform 0.3s ease;
-        }
-
-        .history-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s ease-out, opacity 0.4s ease-out;
-            opacity: 0;
-            padding-top: 5px;
-        }
-
-        .history-content.expanded {
-            max-height: 300px;
-            opacity: 1;
-            overflow-y: auto;
-        }
-
-        .history-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .history-list li {
-            padding: 8px 0;
-            border-bottom: 1px dotted #e9edf2;
-            font-size: 0.95em;
-            color: #555;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .history-list li:last-child {
-            border-bottom: none;
-        }
-        .history-list li strong {
-            color: #333;
-        }
-        .history-list li .date {
-            font-weight: normal;
-            font-size: 0.85em;
-            color: #777;
-        }
-
-        /* --- Estilos para el Informe de WhatsApp --- */
-        .report-section {
-            background-color: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            padding: 20px;
-            width: 100%;
-            max-width: 580px;
-            min-width: 320px;
-            box-sizing: border-box;
-            margin-top: 20px;
-            text-align: center;
-        }
-
-        .report-section h3 {
+        /* --- Sección de Gestión de Datos --- */
+        .data-management-container h3 {
             margin-top: 0;
-            color: #2c3e50;
+            color: var(--header-text-color);
             font-size: 1.5em;
             margin-bottom: 15px;
-        }
-
-        /* Controles de reporte mejorados */
-        .report-controls {
-            display: flex;
-            flex-direction: column; /* Apila los elementos verticalmente por defecto */
-            align-items: center; /* Centra los elementos */
-            gap: 15px; /* Espacio entre las líneas de controles */
-            margin-bottom: 15px;
-        }
-
-        .report-controls .control-group {
-            display: flex;
-            flex-wrap: wrap; /* Permite que los elementos se envuelvan si no caben */
-            justify-content: center; /* Centra los elementos dentro del grupo */
-            align-items: center;
-            gap: 8px; /* Espacio entre elementos dentro del grupo */
-            width: 100%; /* Ocupa todo el ancho disponible */
-        }
-
-        .report-controls label {
-            font-size: 0.95em; /* Un poco más grande para mejor legibilidad */
-            color: #555;
-            white-space: nowrap; /* Evita que el texto de la etiqueta se rompa */
-        }
-
-        .report-controls select,
-        .report-controls input[type="number"] {
-            padding: 8px;
-            border: 1px solid #ced4da;
-            border-radius: 5px;
-            font-size: 1em;
-            background-color: #f8f9fa;
-            flex-shrink: 0; /* Evita que se encojan en pantallas pequeñas */
-        }
-
-        .report-controls input[type="number"] { /* Solo para el año */
-            width: 70px;
             text-align: center;
         }
-
-        .report-section button {
-            background-color: #28a745;
-            color: white;
+        .data-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .data-buttons button {
+            background-color: var(--data-btn-bg);
+            color: var(--button-text-color);
             border: none;
             padding: 12px 20px;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 1.1em;
+            font-size: 1em;
             font-weight: bold;
             transition: background-color 0.3s ease, transform 0.1s ease;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            margin-top: 15px;
         }
-
-        .report-section button:hover {
-            background-color: #218838;
+        .data-buttons button:hover {
+            background-color: var(--data-btn-hover-bg);
             transform: translateY(-1px);
         }
 
-        .report-output {
-            background-color: #e9ecef;
-            border: 1px solid #ced4da;
-            border-radius: 8px;
-            padding: 15px;
-            text-align: left;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: monospace;
-            font-size: 0.9em;
-            min-height: 50px;
-            max-height: 200px;
-            overflow-y: auto;
+        /* --- Sección de Informe --- */
+        .report-section { text-align: center; }
+        .report-section h3 { margin-top: 0; color: var(--header-text-color); font-size: 1.5em; margin-bottom: 15px; }
+        .report-controls { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .report-controls .control-group { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; width: 100%; }
+        .report-controls label { font-size: 0.95em; color: var(--text-color-secondary); white-space: nowrap; }
+        .report-controls select, .report-controls input[type="number"] {
+            padding: 8px; border: 1px solid var(--input-border); border-radius: 5px; font-size: 1em;
+            background-color: var(--input-bg); color: var(--text-color); flex-shrink: 0;
+        }
+        .report-controls input[type="number"] { width: 70px; text-align: center; }
+        .report-section button {
+            background-color: var(--report-btn-bg); color: var(--button-text-color); border: none; padding: 12px 20px;
+            border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.1s ease; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             margin-top: 15px;
-            cursor: text;
+        }
+        .report-section button:hover { background-color: var(--report-btn-hover-bg); transform: translateY(-1px); }
+        .report-output {
+            background-color: var(--report-output-bg); border: 1px solid var(--input-border);
+            border-radius: 8px; padding: 15px; text-align: left; white-space: pre-wrap; word-wrap: break-word;
+            font-family: monospace; font-size: 0.9em; min-height: 50px; max-height: 200px;
+            overflow-y: auto; margin-top: 15px; cursor: text; color: var(--text-color);
         }
 
-        .copy-message {
-            margin-top: 10px;
-            font-size: 0.9em;
-            color: #007bff;
-            opacity: 0;
-            transition: opacity 0.3s ease-out;
+        /* --- Estilos de Notificaciones Tostador --- */
+        #toast-container {
+            position: fixed; top: 20px; right: 20px; z-index: 9999;
+            display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
         }
-        .copy-message.show {
-            opacity: 1;
+        .toast {
+            background-color: #2c3e50; color: white; padding: 12px 20px;
+            border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            font-size: 0.95em; opacity: 0; transform: translateX(100%);
+            transition: opacity 0.5s ease, transform 0.5s ease;
         }
+        .toast.show { opacity: 1; transform: translateX(0); }
 
-
-        /* Media queries para pantallas pequeñas (móviles) */
+        /* --- Media Queries --- */
         @media (max-width: 600px) {
-            .calendar-container, .history-container, .report-section {
-                padding: 15px;
-            }
-            .header h2 {
-                font-size: 1.6em;
-            }
-            .header button {
-                padding: 8px 12px;
-                font-size: 1em;
-            }
-            .weekdays {
-                font-size: 0.9em;
-            }
-            .day .day-number {
-                font-size: 1.1em;
-            }
-            .day .status-text {
-                font-size: 0.75em;
-            }
-            .day-content {
-                padding: 6px 3px;
-            }
-            .history-header h3, .report-section h3 {
-                font-size: 1.2em;
-            }
-            .history-header .toggle-icon {
-                font-size: 1.5em;
-            }
-            .history-list li {
-                font-size: 0.9em;
-            }
-            .report-section button {
-                padding: 10px 15px;
-                font-size: 1em;
-            }
-            .report-output {
-                font-size: 0.85em;
-            }
-            /* En móviles, los grupos de control ya están apilados y centrados */
-            .report-controls .control-group {
-                flex-direction: column; /* Apila elementos dentro del grupo también */
-                gap: 5px; /* Menor espacio dentro del grupo para compactar */
-            }
-            .report-controls label {
-                text-align: center;
-                width: 100%; /* Etiqueta ocupa todo el ancho para centrarse */
-            }
+            .calendar-container, .data-management-container, .report-section { padding: 15px; }
+            .header h2 { font-size: 1.6em; }
+            .header button { padding: 8px 12px; font-size: 1em; }
+            .weekdays { font-size: 0.9em; }
+            .day .day-number { font-size: 1.1em; }
+            .day .status-text { font-size: 0.75em; }
+            .data-management-container h3, .report-section h3 { font-size: 1.2em; }
+            #themeToggle { font-size: 1.3em; }
+            .report-controls .control-group { flex-direction: column; gap: 5px; }
+            #toast-container { right: 10px; top: 10px; width: calc(100% - 20px); }
         }
     </style>
 </head>
 <body>
+    <div id="toast-container"></div>
+
     <div class="calendar-container">
         <div class="header">
+            <button id="themeToggle">🌙</button>
             <button id="prevMonth">&lt;</button>
             <h2 id="monthYear"></h2>
             <button id="nextMonth">&gt;</button>
         </div>
         <div class="weekdays">
-            <span>Lun</span>
-            <span>Mar</span>
-            <span>Mié</span>
-            <span>Jue</span>
-            <span>Vie</span>
-            <span>Sáb</span>
-            <span>Dom</span>
+            <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
         </div>
-        <div id="calendarGrid" class="day-grid">
-            </div>
+        <div id="calendarGrid" class="day-grid"></div>
     </div>
 
-    <div class="history-container">
-        <div class="history-header" id="historyHeader">
-            <h3>Historial de Cambios</h3>
-            <span class="toggle-icon">+</span>
+    <div class="data-management-container">
+        <h3>Gestión de Datos</h3>
+        <div class="data-buttons">
+            <button id="importDataBtn">Importar Datos</button>
+            <button id="exportDataBtn">Exportar Datos</button>
         </div>
-        <div class="history-content" id="historyContent">
-            <ul class="history-list" id="historyList">
-                </ul>
-        </div>
+        <input type="file" id="fileInput" accept=".json" style="display: none;">
     </div>
 
     <div class="report-section">
@@ -463,359 +315,221 @@
         <div class="report-output" id="reportOutput">
             Selecciona el mes y año de inicio, luego haz clic en "Generar Informe".
         </div>
-        <div class="copy-message" id="copyMessage">Texto copiado al portapapeles. ¡Listo para WhatsApp!</div>
     </div>
 
     <script>
+        // Elementos del DOM
         const calendarGrid = document.getElementById('calendarGrid');
         const monthYearLabel = document.getElementById('monthYear');
         const prevMonthBtn = document.getElementById('prevMonth');
         const nextMonthBtn = document.getElementById('nextMonth');
-
-        const historyHeader = document.getElementById('historyHeader');
-        const historyContent = document.getElementById('historyContent');
-        const historyList = document.getElementById('historyList');
-        const toggleIcon = historyHeader.querySelector('.toggle-icon');
-
+        const themeToggleBtn = document.getElementById('themeToggle');
         const generateReportBtn = document.getElementById('generateReportBtn');
         const reportOutput = document.getElementById('reportOutput');
-        const copyMessage = document.getElementById('copyMessage');
-
         const reportMonthSelect = document.getElementById('reportMonth');
         const reportYearInput = document.getElementById('reportYear');
+        const toastContainer = document.getElementById('toast-container');
+        const importDataBtn = document.getElementById('importDataBtn');
+        const exportDataBtn = document.getElementById('exportDataBtn');
+        const fileInput = document.getElementById('fileInput');
 
+        // Estado de la aplicación
         let currentDate = new Date();
         let currentMonth = currentDate.getMonth();
         let currentYear = currentDate.getFullYear();
-
         const statuses = ["Libre", "Supervisor", "Crupier"];
         const statusClassMap = {
             "Libre": "status-libre",
             "Supervisor": "status-supervisor",
             "Crupier": "status-crupier"
         };
-
         let workDays = JSON.parse(localStorage.getItem('workDays')) || {};
-        let changeHistory = JSON.parse(localStorage.getItem('changeHistory')) || [];
-
         const monthNames = [
             "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
             "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
         ];
 
-        function formatFullDate(year, month, day) {
-            const d = String(day).padStart(2, '0');
-            const m = String(month + 1).padStart(2, '0');
-            const y = String(year);
-            return `${d}-${m}-${y}`;
-        }
+        // --- FUNCIONES ---
 
-        function getDaysInMonth(year, month) {
-            return new Date(year, month + 1, 0).getDate();
-        }
-
-        function getFirstDayOfMonthAdjusted(year, month) {
-            let firstDay = new Date(year, month, 1).getDay();
-            return (firstDay === 0) ? 6 : firstDay - 1;
+        function showToast(message, duration = 4000) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => { toast.classList.add('show'); }, 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, duration);
         }
 
         function renderCalendar() {
             calendarGrid.innerHTML = '';
             monthYearLabel.textContent = `${monthNames[currentMonth]} ${currentYear}`;
-
-            const daysInMonth = getDaysInMonth(currentYear, currentMonth);
-            const firstDayAdjusted = getFirstDayOfMonthAdjusted(currentYear, currentMonth);
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            let firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const firstDayAdjusted = (firstDay === 0) ? 6 : firstDay - 1;
 
             for (let i = 0; i < firstDayAdjusted; i++) {
-                const emptyDay = document.createElement('div');
-                emptyDay.classList.add('day', 'empty');
-                calendarGrid.appendChild(emptyDay);
+                calendarGrid.insertAdjacentHTML('beforeend', '<div class="day empty"></div>');
             }
 
             for (let day = 1; day <= daysInMonth; day++) {
-                const fullDateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                let currentStatus = workDays[fullDateKey] || "Libre";
-
+                const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const status = workDays[dateKey] || "Libre";
                 const dayDiv = document.createElement('div');
-                dayDiv.classList.add('day');
-                dayDiv.dataset.date = fullDateKey;
-                dayDiv.classList.add(statusClassMap[currentStatus]);
-
-                const dayContent = document.createElement('div');
-                dayContent.classList.add('day-content');
-
-                const dayNumberSpan = document.createElement('span');
-                dayNumberSpan.classList.add('day-number');
-                dayNumberSpan.textContent = day;
-                dayContent.appendChild(dayNumberSpan);
-
-                const statusTextSpan = document.createElement('span');
-                statusTextSpan.classList.add('status-text');
-                statusTextSpan.textContent = currentStatus === "Libre" ? "" : currentStatus;
-                dayContent.appendChild(statusTextSpan);
-
-                dayDiv.appendChild(dayContent);
-
-                dayDiv.addEventListener('click', () => toggleDayStatus(dayDiv, fullDateKey));
+                dayDiv.className = `day ${statusClassMap[status]}`;
+                dayDiv.dataset.date = dateKey;
+                dayDiv.innerHTML = `
+                    <div class="day-content">
+                        <span class="day-number">${day}</span>
+                        <span class="status-text">${status === "Libre" ? "" : status}</span>
+                    </div>`;
+                dayDiv.addEventListener('click', () => toggleDayStatus(dayDiv, dateKey));
                 calendarGrid.appendChild(dayDiv);
             }
         }
 
         function toggleDayStatus(dayDiv, dateKey) {
-            let oldStatus = workDays[dateKey] || "Libre";
-            const currentIndex = statuses.indexOf(oldStatus);
-            const nextIndex = (currentIndex + 1) % statuses.length;
-            const newStatus = statuses[nextIndex];
-
-            if (oldStatus !== newStatus) {
-                const timestamp = new Date().toLocaleString('es-ES', {
-                    year: 'numeric', month: '2-digit', day: '2-digit',
-                    hour: '2-digit', minute: '2-digit', second: '2-digit'
-                });
-                
-                const [year, month, day] = dateKey.split('-').map(Number);
-                const formattedDateForHistory = formatFullDate(year, month - 1, day);
-
-                changeHistory.unshift({
-                    date: formattedDateForHistory,
-                    oldStatus: oldStatus,
-                    newStatus: newStatus,
-                    timestamp: timestamp
-                });
-
-                if (changeHistory.length > 50) {
-                    changeHistory.pop();
-                }
-
-                localStorage.setItem('changeHistory', JSON.stringify(changeHistory));
-                renderHistory();
-            }
-
+            const oldStatus = workDays[dateKey] || "Libre";
+            const newStatus = statuses[(statuses.indexOf(oldStatus) + 1) % statuses.length];
             workDays[dateKey] = newStatus;
             localStorage.setItem('workDays', JSON.stringify(workDays));
 
-            for (const key in statusClassMap) {
-                dayDiv.classList.remove(statusClassMap[key]);
-            }
+            Object.values(statusClassMap).forEach(cls => dayDiv.classList.remove(cls));
             dayDiv.classList.add(statusClassMap[newStatus]);
+            dayDiv.querySelector('.status-text').textContent = newStatus === "Libre" ? "" : newStatus;
 
-            const statusTextSpan = dayDiv.querySelector('.status-text');
-            statusTextSpan.textContent = newStatus === "Libre" ? "" : newStatus;
+            const formattedDate = dateKey.split('-').reverse().join('-');
+            showToast(`Día ${formattedDate} actualizado a ${newStatus}.`);
         }
-
-        function renderHistory() {
-            historyList.innerHTML = '';
-            if (changeHistory.length === 0) {
-                const li = document.createElement('li');
-                li.textContent = "No hay cambios registrados aún.";
-                historyList.appendChild(li);
-                return;
-            }
-
-            changeHistory.forEach(entry => {
-                const li = document.createElement('li');
-                const datePart = `<span class="date">${entry.date}</span>`;
-                const oldStatusText = entry.oldStatus === "Libre" ? "Libre" : entry.oldStatus;
-                const newStatusText = entry.newStatus === "Libre" ? "Libre" : entry.newStatus;
-                const changePart = `<strong>${oldStatusText}</strong> &rarr; <strong>${newStatusText}</strong>`;
-                const timestampPart = `<span class="date">${entry.timestamp.split(', ')[1]}</span>`;
-
-                li.innerHTML = `<div>${datePart}: ${changePart}</div> <div>${timestampPart}</div>`;
-                historyList.appendChild(li);
-            });
-        }
-
-        function toggleHistoryVisibility() {
-            historyContent.classList.toggle('expanded');
-            if (historyContent.classList.contains('expanded')) {
-                toggleIcon.textContent = '-';
-                renderHistory();
-            } else {
-                toggleIcon.textContent = '+';
-            }
-        }
-
+        
         function initializeReportControls() {
-            reportMonthSelect.innerHTML = '';
-            monthNames.forEach((name, index) => {
-                const option = document.createElement('option');
-                option.value = index;
-                option.textContent = name;
-                reportMonthSelect.appendChild(option);
-            });
-
-            const savedReportMonth = localStorage.getItem('reportMonth');
-            const savedReportYear = localStorage.getItem('reportYear');
-
-            reportMonthSelect.value = savedReportMonth !== null ? savedReportMonth : currentMonth;
-            reportYearInput.value = savedReportYear !== null ? savedReportYear : new Date().getFullYear();
-
+            reportMonthSelect.innerHTML = monthNames.map((name, index) => `<option value="${index}">${name}</option>`).join('');
+            reportMonthSelect.value = localStorage.getItem('reportMonth') || currentMonth;
+            reportYearInput.value = localStorage.getItem('reportYear') || currentYear;
             reportMonthSelect.addEventListener('change', () => localStorage.setItem('reportMonth', reportMonthSelect.value));
             reportYearInput.addEventListener('change', () => localStorage.setItem('reportYear', reportYearInput.value));
         }
 
         function copyTextToClipboard(text) {
-            // Intenta el método moderno (Clipboard API)
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(() => {
-                    copyMessage.textContent = 'Texto copiado al portapapeles. ¡Listo para WhatsApp!';
-                    copyMessage.classList.add('show');
-                    setTimeout(() => {
-                        copyMessage.classList.remove('show');
-                    }, 2000);
-                }).catch(err => {
-                    // Fallback si la API moderna falla (por permisos o contexto)
-                    console.error('Error al copiar con Clipboard API:', err);
-                    fallbackCopyTextToClipboard(text);
-                });
-            } else {
-                // Fallback si la API moderna no está disponible
-                fallbackCopyTextToClipboard(text);
-            }
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Informe copiado al portapapeles. ¡Listo!');
+            }).catch(err => {
+                console.error('Error al copiar:', err);
+                showToast('Error al copiar el texto.', 4000);
+            });
         }
-
-        function fallbackCopyTextToClipboard(text) {
-            let textarea = document.createElement("textarea");
-            textarea.value = text;
-            textarea.style.position = "fixed"; // Evita que el scroll se mueva
-            textarea.style.top = "0";
-            textarea.style.left = "0";
-            textarea.style.width = "2em";
-            textarea.style.height = "2em";
-            textarea.style.padding = "0";
-            textarea.style.border = "none";
-            textarea.style.outline = "none";
-            textarea.style.boxShadow = "none";
-            textarea.style.background = "transparent";
-            document.body.appendChild(textarea);
-            textarea.focus();
-            textarea.select(); // Selecciona el texto en el textarea
-            try {
-                let successful = document.execCommand('copy');
-                if (successful) {
-                    copyMessage.textContent = 'Texto copiado al portapapeles (método alternativo). ¡Listo para WhatsApp!';
-                    copyMessage.classList.add('show');
-                    setTimeout(() => {
-                        copyMessage.classList.remove('show');
-                    }, 2000);
-                } else {
-                    alert('No se pudo copiar el texto automáticamente. Por favor, selecciona el texto en el cuadro de informe y cópialo manualmente (Ctrl+C o Cmd+C).');
-                    copyMessage.classList.remove('show'); // Esconde el mensaje de éxito si el fallback falló
-                }
-            } catch (err) {
-                console.error('Error al intentar copiar con document.execCommand:', err);
-                alert('No se pudo copiar el texto automáticamente. Por favor, selecciona el texto en el cuadro de informe y cópialo manualmente (Ctrl+C o Cmd+C).');
-                copyMessage.classList.remove('show');
-            }
-            document.body.removeChild(textarea);
-        }
-
 
         function generateReport() {
-            const startDay = 15;
-            const endDay = 15;
-
             const reportMonth = parseInt(reportMonthSelect.value);
             const reportYear = parseInt(reportYearInput.value);
-
+            let startDate = new Date(reportYear, reportMonth, 15);
+            let endDate = new Date(reportYear, reportMonth + 1, 15);
             let supervisorDays = [];
             
-            let startDate = new Date(reportYear, reportMonth, startDay);
-            let endDate = new Date(reportYear, reportMonth + 1, endDay); 
-            
-            // Si el día 'endDay' no existe en el mes calculado, new Date lo ajusta al siguiente día válido.
-            // Lo corregimos para que sea el último día del mes en el que debería caer.
-            const tempEndDateForValidation = new Date(endDate.getFullYear(), endDate.getMonth(), 1); 
-            const maxDayInEndMonth = new Date(tempEndDateForValidation.getFullYear(), tempEndDateForValidation.getMonth() + 1, 0).getDate();
-            
-            if (endDay > maxDayInEndMonth) {
-                if (endDate.getDate() !== endDay) { 
-                     endDate = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0); 
-                     console.warn(`El día ${endDay} no existe en el mes final. Ajustado a ${endDate.getDate()}`);
-                }
-            }
-
-
-            if (startDate.getTime() >= endDate.getTime()) {
-                alert("El rango de fechas es inválido. El día 15 del mes seleccionado es igual o posterior al 15 del mes siguiente. Por favor, revisa el año y mes.");
-                return;
-            }
-
-            let currentDayIterator = new Date(startDate); 
-            
-            while (currentDayIterator.getTime() <= endDate.getTime()) { 
-                const year = currentDayIterator.getFullYear();
-                const month = currentDayIterator.getMonth();
-                const day = currentDayIterator.getDate();
-
-                const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                 if (workDays[dateKey] === "Supervisor") {
-                    supervisorDays.push(formatFullDate(year, month, day));
+                    const formattedDate = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                    supervisorDays.push(formattedDate);
                 }
-                
-                currentDayIterator.setDate(day + 1); 
             }
-
-            const startMonthName = monthNames[startDate.getMonth()];
-            const startYear = startDate.getFullYear();
-            const endMonthName = monthNames[endDate.getMonth()];
-            const endYear = endDate.getFullYear();
-
-            // Aquí se utilizan directamente las cadenas con la 'í'
-            let reportTitle = `Informe de días de Supervisor - Del 15 de ${startMonthName} ${startYear} al 15 de ${endMonthName} ${endYear}`;
             
-            let reportText = `${reportTitle}\n`;
-            reportText += `**Cantidad de días de Supervisor: ${supervisorDays.length}**\n`; 
+            const startMonthName = monthNames[startDate.getMonth()];
+            const endMonthName = monthNames[endDate.getMonth()];
+            
+            let reportText = `Informe de días de Supervisor\n`;
+            reportText += `Del 15 de ${startMonthName} ${startDate.getFullYear()} al 15 de ${endMonthName} ${endDate.getFullYear()}\n\n`;
+            reportText += `**Cantidad de días: ${supervisorDays.length}**\n`;
             reportText += "--------------------------------------\n";
-
-            if (supervisorDays.length > 0) {
-                reportText += "Días de Supervisor:\n";
-                supervisorDays.forEach(day => {
-                    reportText += `- ${day}\n`;
-                });
-            } else {
-                reportText += "No hay días marcados como 'Supervisor' para este rango.\n";
-            }
-            reportText += "--------------------------------------";
-
+            reportText += supervisorDays.length > 0 ? supervisorDays.map(day => `- ${day}`).join('\n') : "No se registraron días de Supervisor.";
+            reportText += "\n--------------------------------------";
+            
             reportOutput.textContent = reportText;
-            reportOutput.focus();
-
-            // Llamamos a la nueva función de copiado
             copyTextToClipboard(reportText);
         }
 
-        // Event Listeners
+        // --- FUNCIONES DE IMPORTAR/EXPORTAR ---
+        function exportData() {
+            const dataStr = JSON.stringify(workDays, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'calendario-trabajo-backup.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast('Datos exportados correctamente.');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    // Validación simple para asegurar que es un objeto
+                    if (typeof importedData === 'object' && importedData !== null && !Array.isArray(importedData)) {
+                        workDays = importedData;
+                        localStorage.setItem('workDays', JSON.stringify(workDays));
+                        renderCalendar();
+                        showToast('¡Datos importados con éxito!');
+                    } else {
+                        throw new Error('El formato del archivo no es válido.');
+                    }
+                } catch (error) {
+                    console.error('Error al importar el archivo:', error);
+                    showToast('Error: El archivo no es válido o está dañado.');
+                } finally {
+                    // Resetear el valor del input para permitir importar el mismo archivo de nuevo
+                    fileInput.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- MANEJADORES DE EVENTOS ---
         prevMonthBtn.addEventListener('click', () => {
-            currentMonth--;
-            if (currentMonth < 0) {
-                currentMonth = 11;
-                currentYear--;
-            }
+            currentMonth = (currentMonth === 0) ? 11 : currentMonth - 1;
+            if (currentMonth === 11) currentYear--;
             renderCalendar();
         });
 
         nextMonthBtn.addEventListener('click', () => {
-            currentMonth++;
-            if (currentMonth > 11) {
-                currentMonth = 0;
-                currentYear++;
-            }
+            currentMonth = (currentMonth === 11) ? 0 : currentMonth + 1;
+            if (currentMonth === 0) currentYear++;
             renderCalendar();
         });
 
-        historyHeader.addEventListener('click', toggleHistoryVisibility);
         generateReportBtn.addEventListener('click', generateReport);
+        exportDataBtn.addEventListener('click', exportData);
+        importDataBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', importData);
 
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            themeToggleBtn.textContent = isDarkMode ? '☀️' : '🌙';
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        });
 
-        // Inicializar al cargar la página
+        // --- INICIALIZACIÓN ---
         document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                themeToggleBtn.textContent = '☀️';
+            } else {
+                themeToggleBtn.textContent = '🌙';
+            }
             renderCalendar();
-            renderHistory();
             initializeReportControls();
         });
     </script>
 </body>
 </html>
-
