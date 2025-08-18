@@ -223,7 +223,7 @@
                 <input type="number" id="reportYear">
             </div>
             <div class="control-group">
-                <label>al 15 del mes siguiente</label>
+                <label>al 14 del mes siguiente</label>
             </div>
         </div>
         <button id="generateReportBtn">Generar y Copiar Informe</button>
@@ -293,11 +293,8 @@
         let currentDate = new Date();
         let currentMonth = currentDate.getMonth();
         let currentYear = currentDate.getFullYear();
-        
-        // MODIFICADO: Solo Supervisor y Libre
         const statuses = ["Libre", "Supervisor"]; 
-        const statusClassMap = { "Libre": "status-libre", "Supervisor": "status-supervisor", "Crupier": "status-crupier" }; // Mantenemos Crupier por retrocompatibilidad
-        
+        const statusClassMap = { "Libre": "status-libre", "Supervisor": "status-supervisor", "Crupier": "status-crupier" };
         let workDays = JSON.parse(localStorage.getItem('workDays')) || {};
         let workNotes = JSON.parse(localStorage.getItem('workNotes')) || {};
         const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
@@ -326,7 +323,6 @@
                 const note = workNotes[dateKey] || "";
 
                 const dayDiv = document.createElement('div');
-                // Si un día antiguo era 'Crupier', muéstralo como libre
                 const displayStatus = statuses.includes(status) ? status : "Libre";
                 dayDiv.className = `day ${statusClassMap[displayStatus]}`;
 
@@ -352,7 +348,6 @@
         function openModal(dateKey) {
             currentlyEditingDateKey = dateKey;
             let status = workDays[dateKey] || "Libre";
-            // Si el estado es uno antiguo como "Crupier", trátalo como "Libre" en el modal
             if (!statuses.includes(status)) {
                 status = "Libre";
             }
@@ -415,11 +410,12 @@
         function generateReport() {
             const reportMonth = parseInt(reportMonthSelect.value);
             const reportYear = parseInt(reportYearInput.value);
+            // CORREGIDO: El rango es del 15 al 14 del mes siguiente
             let startDate = new Date(reportYear, reportMonth, 15);
-            let endDate = new Date(reportYear, reportMonth + 1, 15);
+            let endDate = new Date(reportYear, reportMonth + 1, 14);
             let supervisorDays = [];
             
-            for (let d = new Date(startDate); d < endDate; d.setDate(d.getDate() + 1)) {
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
                 const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                 if (workDays[dateKey] === "Supervisor") {
                     const formattedDate = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
@@ -431,7 +427,8 @@
             const endMonthName = monthNames[endDate.getMonth()];
             
             let reportText = `*Informe de días de Supervisor*\n`;
-            reportText += `Del 15 de ${startMonthName} ${startDate.getFullYear()} al 15 de ${endMonthName} ${endDate.getFullYear()}\n\n`;
+            // CORREGIDO: El texto del reporte ahora dice "al 14"
+            reportText += `Del 15 de ${startMonthName} ${startDate.getFullYear()} al 14 de ${endMonthName} ${endDate.getFullYear()}\n\n`;
             reportText += `*Cantidad de días: ${supervisorDays.length}*\n`;
             reportText += "--------------------------------------\n";
             reportText += supervisorDays.length > 0 ? supervisorDays.map(day => `- ${day}`).join('\n') : "No se registraron días de Supervisor.";
@@ -463,7 +460,6 @@
             }
         }
         
-        // MODIFICADO: Solo cuenta días de Supervisor
         function generateAndShowStats() {
             const year = parseInt(statsYearSelect.value);
             if (isNaN(year)) return;
@@ -484,10 +480,11 @@
             // Calcular por período
             for (let month = 0; month < 12; month++) {
                 let periodSupervisorCount = 0;
+                // CORREGIDO: El rango es del 15 al 14 del mes siguiente
                 let startDate = new Date(year, month, 15);
-                let endDate = new Date(year, month + 1, 15);
+                let endDate = new Date(year, month + 1, 14);
                 
-                for (let d = new Date(startDate); d < endDate; d.setDate(d.getDate() + 1)) {
+                for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
                     const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                     if (workDays[dateKey] === 'Supervisor') {
                         periodSupervisorCount++;
