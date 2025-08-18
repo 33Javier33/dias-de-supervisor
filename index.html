@@ -147,7 +147,7 @@
         .stats-controls label { font-weight: bold; }
         .stats-controls select { padding: 8px; border: 1px solid var(--input-border); border-radius: 5px; background-color: var(--input-bg); color: var(--text-color); }
         #stats-results table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        #stats-results th, #stats-results td { padding: 8px; border: 1px solid var(--border-color); text-align: center; }
+        #stats-results th, #stats-results td { padding: 10px; border: 1px solid var(--border-color); text-align: center; }
         #stats-results th { background-color: var(--day-default-bg); }
         #stats-results .total-row { font-weight: bold; }
 
@@ -293,8 +293,11 @@
         let currentDate = new Date();
         let currentMonth = currentDate.getMonth();
         let currentYear = currentDate.getFullYear();
-        const statuses = ["Libre", "Supervisor", "Crupier"];
-        const statusClassMap = { "Libre": "status-libre", "Supervisor": "status-supervisor", "Crupier": "status-crupier" };
+        
+        // MODIFICADO: Solo Supervisor y Libre
+        const statuses = ["Libre", "Supervisor"]; 
+        const statusClassMap = { "Libre": "status-libre", "Supervisor": "status-supervisor", "Crupier": "status-crupier" }; // Mantenemos Crupier por retrocompatibilidad
+        
         let workDays = JSON.parse(localStorage.getItem('workDays')) || {};
         let workNotes = JSON.parse(localStorage.getItem('workNotes')) || {};
         const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
@@ -323,7 +326,10 @@
                 const note = workNotes[dateKey] || "";
 
                 const dayDiv = document.createElement('div');
-                dayDiv.className = `day ${statusClassMap[status]}`;
+                // Si un día antiguo era 'Crupier', muéstralo como libre
+                const displayStatus = statuses.includes(status) ? status : "Libre";
+                dayDiv.className = `day ${statusClassMap[displayStatus]}`;
+
                 if (note) dayDiv.classList.add('has-note');
                 if (today.getFullYear() === currentYear && today.getMonth() === currentMonth && today.getDate() === day) {
                     dayDiv.classList.add('today');
@@ -332,24 +338,24 @@
                 dayDiv.innerHTML = `
                     <div class="day-content">
                         <span class="day-number">${day}</span>
-                        <span class="status-text">${status === "Libre" ? "" : status}</span>
+                        <span class="status-text">${displayStatus === "Libre" ? "" : displayStatus}</span>
                     </div>
                     <div class="note-indicator"></div>`;
                 dayDiv.addEventListener('click', () => openModal(dateKey));
                 calendarGrid.appendChild(dayDiv);
             }
             supervisorCounter.textContent = `Días de Supervisor este mes: ${supervisorCount}`;
-            if(statsContent.classList.contains('expanded')) generateAndShowStats(); // Actualizar solo si está visible
+            if(statsContent.classList.contains('expanded')) generateAndShowStats();
         }
 
         // --- Lógica del Modal de Notas ---
-        function openModal(dateKey) { /* Sin cambios */ }
-        function closeModal() { /* Sin cambios */ }
-        function changeModalStatus() { /* Sin cambios */ }
-        function saveDataFromModal() { /* Sin cambios */ }
         function openModal(dateKey) {
             currentlyEditingDateKey = dateKey;
-            const status = workDays[dateKey] || "Libre";
+            let status = workDays[dateKey] || "Libre";
+            // Si el estado es uno antiguo como "Crupier", trátalo como "Libre" en el modal
+            if (!statuses.includes(status)) {
+                status = "Libre";
+            }
             const note = workNotes[dateKey] || "";
             const [year, month, day] = dateKey.split('-');
             modalDate.textContent = `${day} de ${monthNames[parseInt(month) - 1]} de ${year}`;
@@ -402,7 +408,6 @@
             navigator.clipboard.writeText(text).then(() => {
                 showToast('Informe copiado al portapapeles. ¡Listo!');
             }).catch(err => {
-                console.error('Error al copiar:', err);
                 showToast('Error al copiar el texto.', 4000);
             });
         }
@@ -441,13 +446,11 @@
             statsContent.classList.toggle('expanded');
             if (statsContent.classList.contains('expanded')) {
                 statsToggleIcon.textContent = '-';
-                generateAndShowStats(); // Generar al expandir
+                generateAndShowStats();
             } else {
                 statsToggleIcon.textContent = '+';
             }
         }
-        function populateYearSelector() { /* Sin cambios */ }
-        function generateAndShowStats() { /* Sin cambios */ }
         function populateYearSelector() {
             const currentYearValue = new Date().getFullYear();
             statsYearSelect.innerHTML = '';
@@ -459,43 +462,54 @@
                 statsYearSelect.appendChild(option);
             }
         }
+        
+        // MODIFICADO: Solo cuenta días de Supervisor
         function generateAndShowStats() {
             const year = parseInt(statsYearSelect.value);
             if (isNaN(year)) return;
-            const yearTotals = { "Supervisor": 0, "Crupier": 0, "Libre": 0 };
+
+            let yearTotalSupervisor = 0;
             let periodResults = [];
+
+            // Calcular total anual
+            const yearStartDate = new Date(year, 0, 1);
+            const yearEndDate = new Date(year, 11, 31);
+            for (let d = yearStartDate; d <= yearEndDate; d.setDate(d.getDate() + 1)) {
+                const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                if (workDays[dateKey] === 'Supervisor') {
+                    yearTotalSupervisor++;
+                }
+            }
+
+            // Calcular por período
             for (let month = 0; month < 12; month++) {
-                const periodCounts = { "Supervisor": 0, "Crupier": 0, "Libre": 0 };
+                let periodSupervisorCount = 0;
                 let startDate = new Date(year, month, 15);
                 let endDate = new Date(year, month + 1, 15);
                 
                 for (let d = new Date(startDate); d < endDate; d.setDate(d.getDate() + 1)) {
                     const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                    const status = workDays[dateKey] || "Libre";
-                    periodCounts[status]++;
+                    if (workDays[dateKey] === 'Supervisor') {
+                        periodSupervisorCount++;
+                    }
                 }
-
-                // Contar total anual recorriendo todo el año seleccionado
-                const yearStartDate = new Date(year, 0, 1);
-                const yearEndDate = new Date(year, 11, 31);
-                yearTotals.Supervisor = 0; yearTotals.Crupier = 0; yearTotals.Libre = 0; // Reset
-                for (let d = yearStartDate; d <= yearEndDate; d.setDate(d.getDate() + 1)) {
-                    const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                     const status = workDays[dateKey] || "Libre";
-                     yearTotals[status]++;
-                }
-
                 const periodName = `${monthNames[month].substring(0,3)} a ${monthNames[endDate.getMonth()].substring(0,3)}`;
-                periodResults.push({ name: periodName, counts: periodCounts });
+                periodResults.push({ name: periodName, count: periodSupervisorCount });
             }
-            let tableHTML = `<table><thead><tr><th>Período</th><th>Supervisor</th><th>Crupier</th><th>Libre</th></tr></thead><tbody><tr class="total-row"><td>Total ${year}</td><td>${yearTotals.Supervisor}</td><td>${yearTotals.Crupier}</td><td>${yearTotals.Libre}</td></tr>`;
-            periodResults.forEach(p => { tableHTML += `<tr><td>${p.name}</td><td>${p.counts.Supervisor}</td><td>${p.counts.Crupier}</td><td>${p.counts.Libre}</td></tr>`; });
+
+            let tableHTML = `
+                <table>
+                    <thead><tr><th>Período</th><th>Días de Supervisor</th></tr></thead>
+                    <tbody>
+                        <tr class="total-row"><td>Total ${year}</td><td>${yearTotalSupervisor}</td></tr>`;
+            periodResults.forEach(p => {
+                tableHTML += `<tr><td>${p.name}</td><td>${p.count}</td></tr>`;
+            });
             tableHTML += `</tbody></table>`;
             statsResults.innerHTML = tableHTML;
         }
 
         // --- Navegación y Animación ---
-        function changeMonth(offset) { /* Sin cambios */ }
         function changeMonth(offset) {
             calendarGrid.style.opacity = '0';
             setTimeout(() => {
@@ -508,9 +522,6 @@
         }
 
         // --- Funciones Auxiliares (Toast, Import/Export) ---
-        function showToast(message, duration = 4000) { /* Sin cambios */ }
-        function exportData() { /* Sin cambios */ }
-        function importData(event) { /* Sin cambios */ }
         function showToast(message, duration = 4000) {
             const toast = document.createElement('div');
             toast.className = 'toast';
