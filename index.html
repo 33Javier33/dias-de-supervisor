@@ -1,1153 +1,535 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Días de Supervisor</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --main: #1976d2;
-      --main-dark: #115293;
-      --accent: #43a047; /* Verde para trabajado/torneo */
-      --support: #2196f3; /* Azul para apoyo */
-      --bg: #f7fafd;
-      --white: #fff;
-      --shadow: 0 2px 8px rgba(25, 118, 210, 0.07);
-      --radius: 14px;
-      --error: #e53935;
-      --gray: #e3e7ee;
-    }
-    html,body {
-      height: 100%;
-      margin: 0;
-      font-family: 'Montserrat', Arial, sans-serif;
-      background: var(--bg);
-      color: #222;
-    }
-    .container {
-      max-width: 800px;
-      margin: 38px auto 18px auto;
-      background: var(--white);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 28px 26px 30px 26px;
-    }
-    .user-info-bar {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 18px;
-      align-items: center;
-      flex-wrap: wrap;
-      background: #e3e7ee;
-      padding: 10px 18px;
-      border-radius: 9px;
-      font-size: 1.01rem;
-    }
-    .user-info-bar .user {
-      font-weight: 700;
-      color: var(--main-dark);
-    }
-    .user-info-bar button.logout {
-      background: var(--error);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-weight: bold;
-      padding: 7px 17px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background 0.18s;
-    }
-    .user-info-bar button.logout:hover {
-      background: #c0392b;
-    }
-    .top-bar {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 18px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .top-bar button {
-      padding: 8px 19px;
-      border: none;
-      border-radius: 6px;
-      background: var(--main);
-      color: #fff;
-      font-weight: bold;
-      font-size: 1.01rem;
-      cursor: pointer;
-      transition: background 0.2s;
-      box-shadow: 0 2px 6px #0001;
-    }
-    .top-bar button#clearAllBtn {
-      background: var(--error);
-    }
-    .top-bar button:hover {
-      filter: brightness(0.93);
-    }
-    .top-bar input[type="file"] {
-      display: none;
-    }
-    #feedbackMsg {
-      min-width: 120px;
-      font-weight: bold;
-      font-size: .99rem;
-      margin-left: 10px;
-      padding: 2px 10px;
-      border-radius: 6px;
-      transition: background .2s;
-    }
-    .calendar-container {
-      background: var(--gray);
-      border-radius: var(--radius);
-      padding: 22px 14px 18px 14px;
-      margin-bottom: 26px;
-      box-shadow: 0 1px 6px 0 rgba(60,70,90,0.05);
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-    .header button {
-      padding: 4px 12px;
-      background: #e7effb;
-      border: none;
-      border-radius: 6px;
-      font-size: 1.25rem;
-      font-weight: bold;
-      cursor: pointer;
-      color: var(--main);
-      transition: background 0.2s;
-    }
-    .header button:hover {
-      background: #d3e1f7;
-    }
-    #monthYear {
-      font-size: 1.20rem;
-      font-weight: 700;
-      color: var(--main-dark);
-      letter-spacing: .5px;
-    }
-    .weekdays {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 3px;
-      margin-bottom: 6px;
-    }
-    .weekdays span {
-      font-weight: 700;
-      color: #555;
-      text-align: center;
-      font-size: 1.01rem;
-      padding-bottom: 3px;
-      letter-spacing: .01em;
-    }
-    .day-grid {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 6px;
-    }
-    .day {
-      aspect-ratio: 1/1;
-      background: var(--white);
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      cursor: pointer;
-      font-size: 1.09rem;
-      box-shadow: 0 1px 2px #0001;
-      border: 2px solid transparent;
-      transition: background .18s, border .18s;
-      position: relative;
-      font-family: inherit;
-      font-weight: 500;
-      user-select: none;
-    }
-    .day.other-month {
-      background: #f1f3f6;
-      color: #bfc5d1;
-      cursor: default;
-    }
-    .day.today {
-      border: 2px solid var(--main);
-      box-shadow: 0 0 0 2px #1976d230;
-    }
-    /* Clases para los tipos de día */
-    .day.work-general { /* Mantener por si hay datos viejos, pero no se podrá marcar */
-      background: #eaf7ed;
-      border: 2px solid var(--accent);
-      color: #1a4a7e;
-      font-weight: 700;
-      box-shadow: 0 0 0 2px #43a04725;
-    }
-    .day.work-apoyo {
-      background: #e0f2f7; /* Fondo más claro para apoyo */
-      border: 2px solid var(--support);
-      color: #1a4a7e;
-      font-weight: 700;
-      box-shadow: 0 0 0 2px #2196f325;
-    }
-    .day.work-torneo {
-      background: #fdf1e0; /* Fondo más claro para torneo */
-      border: 2px solid #ff9800; /* Naranja para torneo */
-      color: #1a4a7e;
-      font-weight: 700;
-      box-shadow: 0 0 0 2px #ff980025;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario de Trabajo</title>
+    <style>
+        /* --- Tema Claro (Predeterminado) y Variables Globales --- */
+        :root {
+            --bg-color: #f0f2f5;
+            --container-bg: #ffffff;
+            --text-color: #333;
+            --text-color-secondary: #555;
+            --text-color-muted: #6a7c8d;
+            --border-color: #e0e6ed;
+            --border-color-light: #e9edf2;
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --header-text-color: #2c3e50;
+            --button-bg: #007bff;
+            --button-hover-bg: #0056b3;
+            --button-text-color: #ffffff;
+            --report-btn-bg: #28a745;
+            --report-btn-hover-bg: #218838;
+            --data-btn-bg: #6c757d;
+            --data-btn-hover-bg: #5a6268;
+            --day-empty-bg: #f7f9fc;
+            --day-empty-border: #f0f2f5;
+            --day-default-bg: #fdfefe;
+            --day-default-border: #e9edf2;
+            --status-supervisor-bg: #e0f2f7;
+            --status-supervisor-border: #b3e0ed;
+            --status-supervisor-text: #005f73;
+            --status-crupier-bg: #e6ffe6;
+            --status-crupier-border: #b3f0b3;
+            --status-crupier-text: #2d6b3d;
+            --input-bg: #f8f9fa;
+            --input-border: #ced4da;
+            --report-output-bg: #e9ecef;
+        }
 
-    .day .dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      position: absolute;
-      bottom: 7px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: none;
-    }
-    .day.work-general .dot { background: var(--accent); display: inline-block; }
-    .day.work-apoyo .dot { background: var(--support); display: inline-block; }
-    .day.work-torneo .dot { background: #ff9800; display: inline-block; }
+        /* --- Tema Oscuro --- */
+        body.dark-mode {
+            --bg-color: #121212;
+            --container-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --text-color-secondary: #b0b0b0;
+            --text-color-muted: #888888;
+            --border-color: #3a3a3a;
+            --border-color-light: #2c2c2c;
+            --shadow-color: rgba(0, 0, 0, 0.4);
+            --header-text-color: #ffffff;
+            --button-bg: #007bff;
+            --button-hover-bg: #0056b3;
+            --button-text-color: #ffffff;
+            --report-btn-bg: #28a745;
+            --report-btn-hover-bg: #218838;
+            --data-btn-bg: #5a6268;
+            --data-btn-hover-bg: #494f54;
+            --day-empty-bg: #1a1a1a;
+            --day-empty-border: #121212;
+            --day-default-bg: #2c2c2c;
+            --day-default-border: #3a3a3a;
+            --status-supervisor-bg: #003f5c;
+            --status-supervisor-border: #005f73;
+            --status-supervisor-text: #a7d8e8;
+            --status-crupier-bg: #1e4620;
+            --status-crupier-border: #2d6b3d;
+            --status-crupier-text: #b3f0b3;
+            --input-bg: #333333;
+            --input-border: #555555;
+            --report-output-bg: #252525;
+        }
 
-    .day:hover:not(.other-month) {
-      background: #e3f0fd;
-    }
-    .history-container {
-      margin-bottom: 32px;
-      border-radius: var(--radius);
-      box-shadow: 0 1px 6px 0 rgba(60,70,90,0.04);
-      background: var(--gray);
-    }
-    .history-header {
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      background: #e0e7f6;
-      padding: 8px 16px;
-      border-radius: var(--radius) var(--radius) 0 0;
-      user-select: none;
-      transition: background 0.15s;
-    }
-    .history-header:hover {
-      background: #d3e1f7;
-    }
-    .history-header h3 {
-      margin: 0;
-      flex: 1;
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: var(--main-dark);
-      letter-spacing: .2px;
-    }
-    .toggle-icon {
-      font-size: 1.2rem;
-      color: var(--main);
-      margin-left: 7px;
-      font-weight: bold;
-      transition: transform 0.2s;
-    }
-    .history-content {
-      background: #f8fafd;
-      border-radius: 0 0 var(--radius) var(--radius);
-      padding: 12px 18px;
-      display: none;
-      min-height: 30px;
-    }
-    .history-list {
-      margin: 0;
-      padding-left: 16px;
-      list-style: none;
-    }
-    .history-list li {
-      font-size: 0.99rem;
-      margin-bottom: 5px;
-      color: #234;
-      letter-spacing: .02em;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .history-list .mark { color: var(--accent); font-size: 1.05em; }
-    .history-list .unmark { color: var(--error); font-size: 1.05em; }
-    .show-all-btn {
-      margin: 8px 0 0 0;
-      padding: 5px 13px;
-      border: none;
-      background: #e0e7f6;
-      color: var(--main-dark);
-      border-radius: 6px;
-      font-size: .98rem;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background .15s;
-      display: inline-block;
-    }
-    .show-all-btn:hover {
-      background: #d3e1f7;
-    }
-    .report-section {
-      background: var(--gray);
-      border-radius: var(--radius);
-      padding: 20px 20px 14px 20px;
-      box-shadow: 0 1px 6px 0 rgba(60,70,90,0.04);
-    }
-    .report-section h3 {
-      margin-top: 0;
-      margin-bottom: 8px;
-      color: var(--main-dark);
-      font-weight: 700;
-      letter-spacing: .1px;
-    }
-    .report-controls {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-    .control-group {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-    .report-controls label {
-      font-size: 1rem;
-      color: #333;
-    }
-    #reportMonth, #reportYear {
-      padding: 2px 7px;
-      font-size: 1rem;
-      border-radius: 5px;
-      border: 1px solid #bbb;
-      background: #fff;
-    }
-    #generateReportBtn {
-      margin-top: 8px;
-      padding: 7px 16px;
-      background: var(--main);
-      border: none;
-      border-radius: 5px;
-      color: #fff;
-      font-weight: bold;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background 0.2s;
-    }
-    #generateReportBtn:hover {
-      background: var(--main-dark);
-    }
-    .report-output {
-      background: #fff;
-      border-radius: 7px;
-      margin-top: 14px;
-      padding: 12px 10px;
-      min-height: 42px;
-      font-size: 1.07rem;
-      color: #222;
-      word-break: break-all;
-      letter-spacing: .06em;
-      box-shadow: 0 1.5px 6px #0002;
-    }
-    .copy-message {
-      font-size: .98rem;
-      color: var(--accent);
-      margin-top: 7px;
-      display: none;
-      font-weight: 600;
-    }
-    .modal-bg {
-      position: fixed;
-      z-index: 1000;
-      left: 0; top: 0; right: 0; bottom: 0;
-      width: 100vw; height: 100vh;
-      background: rgba(30,40,60,.18);
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal-bg.active { display: flex; }
-    .modal-login {
-      background: #fff;
-      border-radius: 18px;
-      box-shadow: 0 8px 36px 0 #0003, 0 1.5px 8px #1976d233;
-      padding: 38px 35px 24px 35px;
-      max-width: 97vw;
-      width: 350px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      animation: fadein .3s;
-      position: relative;
-    }
-    @keyframes fadein { from{transform:scale(.93); opacity:0;} to{transform:scale(1); opacity:1;} }
-    .modal-login h2 {
-      margin-top: 0;
-      color: var(--main);
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 12px;
-      letter-spacing: .04em;
-    }
-    .modal-login .login-hint {
-      margin-bottom: 12px;
-      color: #444;
-      font-size: 1.01rem;
-      text-align: center;
-    }
-    .modal-login input {
-      width: 90%;
-      margin-bottom: 14px;
-      padding: 8px 13px;
-      font-size: 1rem;
-      border: 1.5px solid #b0b7c3;
-      border-radius: 6px;
-      font-family: inherit;
-    }
-    .modal-login button {
-      width: 100%;
-      padding: 10px 0;
-      background: var(--main);
-      color: #fff;
-      font-weight: bold;
-      font-size: 1.01rem;
-      border: none;
-      border-radius: 7px;
-      cursor: pointer;
-      margin-top: 5px;
-      transition: background .18s;
-    }
-    .modal-login button:hover { background: var(--main-dark); }
-    .modal-login .login-msg {
-      min-height: 22px;
-      color: var(--error);
-      font-size: .99rem;
-      font-weight: 600;
-      margin-bottom: 7px;
-      margin-top: -7px;
-      text-align: center;
-    }
-    .modal-login .forgot-link {
-      color: var(--main);
-      font-size: .99rem;
-      margin-bottom: 10px;
-      cursor: pointer;
-      text-decoration: underline;
-      margin-top: -8px;
-      align-self: flex-end;
-      transition: color .18s;
-    }
-    .modal-login .forgot-link:hover {
-      color: var(--main-dark);
-    }
-    .modal-login .back-link {
-      color: var(--main-dark);
-      font-size: .99rem;
-      margin-top: 8px;
-      cursor: pointer;
-      text-decoration: underline;
-      align-self: flex-end;
-      transition: color .18s;
-    }
-    .modal-login .back-link:hover {
-      color: var(--main);
-    }
+        /* --- Estilos Generales --- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            padding: 20px;
+            margin: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s, color 0.3s;
+        }
 
-    /* Nuevo estilo para el menú flotante */
-    .day-options-menu {
-      position: absolute;
-      background: var(--white);
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      z-index: 100;
-      display: none; /* Oculto por defecto */
-      flex-direction: column;
-      padding: 8px 0;
-      top: 50%; /* Posicionamiento inicial */
-      left: 50%;
-      transform: translate(-50%, -50%); /* Centrar */
-      min-width: 160px;
-    }
-    .day-options-menu button {
-      background: none;
-      border: none;
-      padding: 10px 15px;
-      text-align: left;
-      cursor: pointer;
-      font-size: 0.95rem;
-      color: #333;
-      transition: background-color 0.2s;
-      width: 100%;
-      box-shadow: none; /* Anular sombra de botones */
-      font-weight: 500;
-      border-radius: 0;
-    }
-    .day-options-menu button:hover {
-      background-color: #f0f0f0;
-    }
-    .day-options-menu button:active {
-      background-color: #e0e0e0;
-    }
-    .day-options-menu button.delete {
-      color: var(--error);
-    }
+        /* --- Contenedores Principales --- */
+        .calendar-container, .data-management-container, .report-section {
+            background-color: var(--container-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px var(--shadow-color);
+            padding: 25px;
+            width: 100%;
+            max-width: 580px;
+            min-width: 320px;
+            box-sizing: border-box;
+            transition: background-color 0.3s;
+            margin-bottom: 20px;
+        }
 
-    @media (max-width: 700px) {
-      .container { padding: 10px 4vw; }
-      .calendar-container, .report-section { padding: 10px 2vw; }
-      .history-content { padding: 8px 2vw; }
-      .modal-login { padding: 24px 6vw 18px 6vw; width: 95vw; }
-    }
-    @media (max-width: 480px) {
-      .container { padding: 4px; }
-      .calendar-container, .report-section { padding: 4px; }
-      .control-group { flex-direction: column; align-items: flex-start; }
-      .weekdays, .day-grid { font-size: 0.95rem; }
-    }
-  </style>
+        /* --- Encabezado del Calendario --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .header h2 {
+            margin: 0;
+            font-size: 2em;
+            color: var(--header-text-color);
+            text-align: center;
+            flex-grow: 1;
+        }
+        .header button {
+            background-color: var(--button-bg);
+            color: var(--button-text-color);
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .header button:hover {
+            background-color: var(--button-hover-bg);
+            transform: translateY(-1px);
+        }
+        #themeToggle {
+            background-color: transparent;
+            font-size: 1.5em;
+            padding: 5px 10px;
+            box-shadow: none;
+            color: var(--text-color);
+            order: -1;
+        }
+
+        /* --- Días del Calendario --- */
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            font-weight: bold;
+            color: var(--text-color-muted);
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+        .day-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+        }
+        .day {
+            background-color: var(--day-default-bg);
+            border: 1px solid var(--day-default-border);
+            border-radius: 8px;
+            padding-bottom: 100%;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease, border-color 0.2s;
+        }
+        .day:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px var(--shadow-color);
+        }
+        .day.empty {
+            background-color: var(--day-empty-bg);
+            border-color: var(--day-empty-border);
+            cursor: default;
+            pointer-events: none;
+        }
+        .day-content {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: space-between;
+            align-items: center; padding: 8px 4px; box-sizing: border-box;
+        }
+        .day .day-number { font-size: 1.3em; font-weight: bold; color: var(--text-color); }
+        .day .status-text {
+            font-size: 0.8em; font-weight: 600; color: var(--text-color-secondary);
+            text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .status-libre { background-color: var(--day-default-bg); border-color: var(--day-default-border); }
+        .status-supervisor { background-color: var(--status-supervisor-bg); border-color: var(--status-supervisor-border); }
+        .status-supervisor .status-text, .status-supervisor .day-number { color: var(--status-supervisor-text); }
+        .status-crupier { background-color: var(--status-crupier-bg); border-color: var(--status-crupier-border); }
+        .status-crupier .status-text, .status-crupier .day-number { color: var(--status-crupier-text); }
+
+        /* --- Sección de Gestión de Datos --- */
+        .data-management-container h3 {
+            margin-top: 0;
+            color: var(--header-text-color);
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .data-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .data-buttons button {
+            background-color: var(--data-btn-bg);
+            color: var(--button-text-color);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .data-buttons button:hover {
+            background-color: var(--data-btn-hover-bg);
+            transform: translateY(-1px);
+        }
+
+        /* --- Sección de Informe --- */
+        .report-section { text-align: center; }
+        .report-section h3 { margin-top: 0; color: var(--header-text-color); font-size: 1.5em; margin-bottom: 15px; }
+        .report-controls { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .report-controls .control-group { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; width: 100%; }
+        .report-controls label { font-size: 0.95em; color: var(--text-color-secondary); white-space: nowrap; }
+        .report-controls select, .report-controls input[type="number"] {
+            padding: 8px; border: 1px solid var(--input-border); border-radius: 5px; font-size: 1em;
+            background-color: var(--input-bg); color: var(--text-color); flex-shrink: 0;
+        }
+        .report-controls input[type="number"] { width: 70px; text-align: center; }
+        .report-section button {
+            background-color: var(--report-btn-bg); color: var(--button-text-color); border: none; padding: 12px 20px;
+            border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.1s ease; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            margin-top: 15px;
+        }
+        .report-section button:hover { background-color: var(--report-btn-hover-bg); transform: translateY(-1px); }
+        .report-output {
+            background-color: var(--report-output-bg); border: 1px solid var(--input-border);
+            border-radius: 8px; padding: 15px; text-align: left; white-space: pre-wrap; word-wrap: break-word;
+            font-family: monospace; font-size: 0.9em; min-height: 50px; max-height: 200px;
+            overflow-y: auto; margin-top: 15px; cursor: text; color: var(--text-color);
+        }
+
+        /* --- Estilos de Notificaciones Tostador --- */
+        #toast-container {
+            position: fixed; top: 20px; right: 20px; z-index: 9999;
+            display: flex; flex-direction: column; align-items: flex-end; gap: 10px;
+        }
+        .toast {
+            background-color: #2c3e50; color: white; padding: 12px 20px;
+            border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            font-size: 0.95em; opacity: 0; transform: translateX(100%);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .toast.show { opacity: 1; transform: translateX(0); }
+
+        /* --- Media Queries --- */
+        @media (max-width: 600px) {
+            .calendar-container, .data-management-container, .report-section { padding: 15px; }
+            .header h2 { font-size: 1.6em; }
+            .header button { padding: 8px 12px; font-size: 1em; }
+            .weekdays { font-size: 0.9em; }
+            .day .day-number { font-size: 1.1em; }
+            .day .status-text { font-size: 0.75em; }
+            .data-management-container h3, .report-section h3 { font-size: 1.2em; }
+            #themeToggle { font-size: 1.3em; }
+            .report-controls .control-group { flex-direction: column; gap: 5px; }
+            #toast-container { right: 10px; top: 10px; width: calc(100% - 20px); }
+        }
+    </style>
 </head>
 <body>
-<div class="modal-bg" id="loginModal">
-  <form class="modal-login" id="loginForm" autocomplete="off" style="display:block;">
-    <h2>Bienvenido/a</h2>
-    <div class="login-hint" id="newUserNotification">
-      Si no eres usuario, regístrate completando los campos y elige tu clave.<br>
-      <b>Recuerda:</b> tu número de celular será requerido para recuperar la clave.
+    <div id="toast-container"></div>
+
+    <div class="calendar-container">
+        <div class="header">
+            <button id="themeToggle">🌙</button>
+            <button id="prevMonth">&lt;</button>
+            <h2 id="monthYear"></h2>
+            <button id="nextMonth">&gt;</button>
+        </div>
+        <div class="weekdays">
+            <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+        </div>
+        <div id="calendarGrid" class="day-grid"></div>
     </div>
-    <div class="login-hint" id="existingUserNotification" style="display:none;">
-      ¡Hola de nuevo! Ingresa tu clave para continuar.
+
+    <div class="data-management-container">
+        <h3>Gestión de Datos</h3>
+        <div class="data-buttons">
+            <button id="importDataBtn">Importar Datos</button>
+            <button id="exportDataBtn">Exportar Datos</button>
+        </div>
+        <input type="file" id="fileInput" accept=".json" style="display: none;">
     </div>
-    <input type="text" id="modalUser" placeholder="Usuario" maxlength="20" autocomplete="username">
-    <input type="password" id="modalPass" placeholder="Clave" maxlength="20" autocomplete="current-password">
-    <input type="text" id="modalPhone" placeholder="Número de celular" maxlength="20" autocomplete="tel" style="display:none;">
-    <div class="login-msg" id="modalLoginMsg"></div>
-    <button type="submit" id="modalLoginBtn">Entrar</button>
-    <span class="forgot-link" id="forgotPassLink">¿Olvidaste tu clave?</span>
-  </form>
-  <form class="modal-login" id="recoverForm" autocomplete="off" style="display:none;">
-    <h2>Recupera tu clave</h2>
-    <div class="login-hint">
-      Ingresa tu usuario y el número de celular con el que te registraste.
+
+    <div class="report-section">
+        <h3>Generar Informe de Supervisor</h3>
+        <div class="report-controls">
+            <div class="control-group">
+                <label>Informe del **15** de:</label>
+                <select id="reportMonth"></select>
+                <input type="number" id="reportYear" min="2000" max="2100">
+            </div>
+            <div class="control-group">
+                <label>al **15** del mes siguiente</label>
+            </div>
+        </div>
+        <button id="generateReportBtn">Generar Informe</button>
+        <div class="report-output" id="reportOutput">
+            Selecciona el mes y año de inicio, luego haz clic en "Generar Informe".
+        </div>
     </div>
-    <input type="text" id="recoverUser" placeholder="Usuario" maxlength="20" autocomplete="username">
-    <input type="text" id="recoverPhone" placeholder="Número de celular" maxlength="20" autocomplete="tel">
-    <input type="password" id="recoverNewPass" placeholder="Nueva clave" maxlength="20" style="display:none;">
-    <div class="login-msg" id="modalRecoverMsg"></div>
-    <button type="submit" id="recoverBtn">Recuperar clave</button>
-    <span class="back-link" id="backToLogin">Volver</span>
-  </form>
-</div>
-<div class="container">
-  <div class="user-info-bar" id="userInfoBar" style="display:none;">
-    <span>Usuario: <span class="user" id="currentUserName"></span></span>
-    <button class="logout" id="logoutBtn">Cerrar sesión</button>
-  </div>
-  <div class="top-bar">
-    <button id="exportBtn">Exportar Datos</button>
-    <button id="importBtn">Importar Datos</button>
-    <input type="file" id="importFile" accept="application/json">
-    <button id="clearAllBtn">Borrar Todo</button>
-    <span id="feedbackMsg"></span>
-  </div>
-  <div class="calendar-container">
-    <div class="header">
-      <button id="prevMonth">&lt;</button>
-      <h2 id="monthYear"></h2>
-      <button id="nextMonth">&gt;</button>
-    </div>
-    <div class="weekdays">
-      <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
-    </div>
-    <div id="calendarGrid" class="day-grid"></div>
 
-    <div class="day-options-menu" id="dayOptionsMenu">
-      <button data-type="apoyo">Supervisor de apoyo</button>
-      <button data-type="torneo">Supervisor de Torneo</button>
-      <button data-type="unmark" class="delete">Desmarcar día</button>
-    </div>
-  </div>
-  <div class="history-container">
-    <div class="history-header" id="historyHeader">
-      <h3>Historial de Cambios</h3>
-      <span class="toggle-icon" id="toggleIcon">+</span>
-    </div>
-    <div class="history-content" id="historyContent">
-      <ul class="history-list" id="historyList"></ul>
-      <button class="show-all-btn" id="showAllBtn" style="display:none;"></button>
-    </div>
-  </div>
-  <div class="report-section">
-    <h3>Generar Informe de Supervisor</h3>
-    <div class="report-controls">
-      <div class="control-group">
-        <label>Informe del <b>15</b> de:</label>
-        <select id="reportMonth"></select>
-        <input type="number" id="reportYear" min="2000" max="2100">
-      </div>
-      <div class="control-group">
-        <label>al <b>15</b> del mes siguiente</label>
-      </div>
-    </div>
-    <button id="generateReportBtn">Generar Informe</button>
-    <div class="report-output" id="reportOutput">
-      Selecciona el mes y año de inicio, luego haz clic en "Generar Informe".
-    </div>
-    <div class="copy-message" id="copyMessage">Texto copiado al portapapeles. ¡Listo para WhatsApp!</div>
-  </div>
-</div>
-<script>
-(function() {
-  // UTILIDAD
-  function showFeedback(msg, ok = true) {
-    const el = document.getElementById('feedbackMsg');
-    el.textContent = msg;
-    el.style.background = ok ? "#eafaf1" : "#fbeeea";
-    el.style.color = ok ? "#2e7d32" : "#c0392b";
-    setTimeout(() => { el.textContent = ""; el.style.background=""; }, 2500);
-  }
-  function showModalLoginMsg(msg, ok=false) {
-    const el = document.getElementById('modalLoginMsg');
-    el.textContent = msg;
-    el.style.color = ok ? "#2e7d32" : "#c0392b";
-    setTimeout(()=>{ el.textContent=""; }, 2500);
-  }
-  function showModalRecoverMsg(msg, ok=false) {
-    const el = document.getElementById('modalRecoverMsg');
-    el.textContent = msg;
-    el.style.color = ok ? "#2e7d32" : "#c0392b";
-    setTimeout(()=>{ el.textContent=""; }, 2500);
-  }
-  // LOCAL STORAGE
-  function saveData(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
-  function loadData(key, def = null) {
-    try {
-      const d = localStorage.getItem(key);
-      return d ? JSON.parse(d) : def;
-    } catch { return def; }
-  }
-  // USUARIOS
-  let users = loadData('users', {});
-  let currentUser = loadData('currentUser', null);
+    <script>
+        // Elementos del DOM
+        const calendarGrid = document.getElementById('calendarGrid');
+        const monthYearLabel = document.getElementById('monthYear');
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const generateReportBtn = document.getElementById('generateReportBtn');
+        const reportOutput = document.getElementById('reportOutput');
+        const reportMonthSelect = document.getElementById('reportMonth');
+        const reportYearInput = document.getElementById('reportYear');
+        const toastContainer = document.getElementById('toast-container');
+        const importDataBtn = document.getElementById('importDataBtn');
+        const exportDataBtn = document.getElementById('exportDataBtn');
+        const fileInput = document.getElementById('fileInput');
 
-  function showLoginModal(show) {
-    const modal = document.getElementById('loginModal');
-    modal.classList.toggle('active', !!show);
-    if (show) {
-      showLoginForm(); // Asegura que el formulario de login se muestre con el estado inicial
-      setTimeout(()=>{ document.getElementById('modalUser').focus(); }, 120);
-    }
-    disableApp(!show ? false : true);
-  }
-  function updateUserBar() {
-    const bar = document.getElementById('userInfoBar');
-    const nameEl = document.getElementById('currentUserName');
-    if (currentUser) {
-      bar.style.display = "";
-      nameEl.textContent = currentUser;
-    } else {
-      bar.style.display = "none";
-      nameEl.textContent = "";
-    }
-  }
-  function disableApp(disable) {
-    document.querySelectorAll(
-      '.calendar-container button, #calendarGrid .day, .top-bar button, .report-section button, .history-header'
-    ).forEach(el => el.disabled = !!disable);
-    document.querySelectorAll(
-      '#calendarGrid .day'
-    ).forEach(el => el.style.pointerEvents = disable ? 'none' : '');
-    document.getElementById('reportMonth').disabled = !!disable;
-    document.getElementById('reportYear').disabled = !!disable;
-  }
-  // MODAL LOGIN + RECUPERACIÓN
-  function showLoginForm() {
-    document.getElementById('loginForm').style.display = "block";
-    document.getElementById('recoverForm').style.display = "none";
-    // Restablecer el estado inicial del formulario de login
-    document.getElementById('modalUser').value = ''; // Limpiar el campo de usuario
-    document.getElementById('modalPass').value = ''; // Limpiar el campo de clave
-    document.getElementById('modalPhone').style.display = "none"; // Ocultar celular por defecto
-    document.getElementById('newUserNotification').style.display = "block"; // Mostrar mensaje de nuevo usuario por defecto
-    document.getElementById('existingUserNotification').style.display = "none"; // Ocultar mensaje de usuario existente
-    document.getElementById('modalPass').placeholder = "Clave"; // Asegura el placeholder inicial
-    document.getElementById('forgotPassLink').style.display = "block"; // Asegura que el link esté visible por defecto
+        // Estado de la aplicación
+        let currentDate = new Date();
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+        const statuses = ["Libre", "Supervisor", "Crupier"];
+        const statusClassMap = {
+            "Libre": "status-libre",
+            "Supervisor": "status-supervisor",
+            "Crupier": "status-crupier"
+        };
+        let workDays = JSON.parse(localStorage.getItem('workDays')) || {};
+        const monthNames = [
+            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        ];
 
-    setTimeout(()=>{ document.getElementById('modalUser').focus(); }, 120);
-  }
-  function showRecoverForm() {
-    document.getElementById('loginForm').style.display = "none";
-    document.getElementById('recoverForm').style.display = "block";
-    setTimeout(()=>{ document.getElementById('recoverUser').focus(); }, 120);
-  }
-  // Cambia visibilidad del campo de celular y mensaje de bienvenida
-  document.getElementById('modalUser').addEventListener('input', function() {
-    let user = this.value.trim();
-    let phoneInput = document.getElementById('modalPhone');
-    const newUserNotification = document.getElementById('newUserNotification');
-    const existingUserNotification = document.getElementById('existingUserNotification');
-    const modalPassInput = document.getElementById('modalPass');
-    const forgotPassLink = document.getElementById('forgotPassLink');
+        // --- FUNCIONES ---
 
-    if (!user) {
-      // Si el campo de usuario está vacío, resetear al estado inicial (como si fuera un usuario nuevo)
-      phoneInput.style.display = "none";
-      newUserNotification.style.display = "block";
-      existingUserNotification.style.display = "none";
-      modalPassInput.placeholder = "Clave";
-      forgotPassLink.style.display = "block";
-      return;
-    }
-
-    if (!users[user]) {
-      // Usuario no existe, pedir registro y mostrar campo de celular
-      phoneInput.style.display = "block";
-      newUserNotification.style.display = "block";
-      existingUserNotification.style.display = "none";
-      modalPassInput.placeholder = "Elige una clave";
-      forgotPassLink.style.display = "none"; // Un nuevo usuario no tiene clave que olvidar
-    } else {
-      // Usuario existe, solo pedir clave y ocultar campo de celular
-      phoneInput.style.display = "none";
-      newUserNotification.style.display = "none";
-      existingUserNotification.style.display = "block";
-      modalPassInput.placeholder = "Clave";
-      forgotPassLink.style.display = "block"; // Un usuario existente sí puede olvidar su clave
-    }
-  });
-
-  document.getElementById('loginForm').onsubmit = function(e){
-    e.preventDefault();
-    let user = document.getElementById('modalUser').value.trim();
-    let pass = document.getElementById('modalPass').value.trim();
-    let phone = document.getElementById('modalPhone').value.trim();
-    if(!user || !pass) { showModalLoginMsg("Ingresa usuario y clave"); return; }
-
-    // Validación de longitud de clave para registro
-    if (!users[user] && pass.length < 4) { // Puedes ajustar esta longitud mínima
-        showModalLoginMsg("La clave debe tener al menos 4 caracteres.");
-        return;
-    }
-
-    if(!users[user]) {
-      // Es un nuevo usuario, requiere teléfono
-      if(!phone) { showModalLoginMsg("Ingresa tu número de celular"); return; }
-      users[user] = { pass: pass, phone: phone };
-      saveData('users', users);
-      currentUser = user;
-      saveData('currentUser', currentUser);
-      showModalLoginMsg("Usuario registrado", true);
-      setTimeout(()=>{
-        showLoginModal(false);
-        updateUserBar();
-        showFeedback("¡Bienvenido/a "+user+"!", true);
-      }, 700);
-      return;
-    } else {
-      // Usuario existente, solo verificar clave
-      if(users[user].pass !== pass) {
-        showModalLoginMsg("Clave incorrecta"); return;
-      } else {
-        currentUser = user;
-        saveData('currentUser', currentUser);
-        showModalLoginMsg("¡Bienvenido/a "+user+"!", true);
-        setTimeout(()=>{
-          showLoginModal(false);
-          updateUserBar();
-          showFeedback("¡Bienvenido/a "+user+"!", true);
-        }, 700);
-        return;
-      }
-    }
-  };
-  document.getElementById('forgotPassLink').onclick = function() {
-    showRecoverForm();
-  };
-  document.getElementById('backToLogin').onclick = function() {
-    showLoginForm();
-  };
-  // Recuperación de clave
-  document.getElementById('recoverForm').onsubmit = function(e){
-    e.preventDefault();
-    let user = document.getElementById('recoverUser').value.trim();
-    let phone = document.getElementById('recoverPhone').value.trim();
-    let newPassInput = document.getElementById('recoverNewPass');
-    let recoverBtn = document.getElementById('recoverBtn');
-    if(newPassInput.style.display === "none") {
-      if(!user || !phone) { showModalRecoverMsg("Completa usuario y celular"); return; }
-      if(!users[user]) { showModalRecoverMsg("Usuario no encontrado"); return; }
-      if(users[user].phone !== phone) { showModalRecoverMsg("Celular no coincide"); return; }
-      showModalRecoverMsg("Correcto. Ingresa la nueva clave.", true);
-      newPassInput.style.display = "block";
-      recoverBtn.textContent = "Guardar nueva clave";
-      newPassInput.focus();
-    } else {
-      let newPass = newPassInput.value.trim();
-      if(!newPass) { showModalRecoverMsg("Ingresa tu nueva clave"); return; }
-      if(newPass.length < 4) { // Puedes ajustar esta longitud mínima para recuperación
-        showModalRecoverMsg("La nueva clave debe tener al menos 4 caracteres.");
-        return;
-      }
-      let user = document.getElementById('recoverUser').value.trim(); // Asegurarse de usar el usuario actual
-      users[user].pass = newPass;
-      saveData('users', users);
-      showModalRecoverMsg("¡Clave actualizada! Ahora puedes iniciar sesión.", true);
-      setTimeout(()=>{
-        newPassInput.value = "";
-        newPassInput.style.display = "none";
-        recoverBtn.textContent = "Recuperar clave";
-        showLoginForm();
-      }, 1000);
-    }
-  };
-  document.getElementById('logoutBtn').onclick = function() {
-    // Añadir confirmación antes de cerrar sesión
-    if (confirm("¿Estás seguro de que quieres cerrar la sesión?")) {
-      currentUser = null;
-      saveData('currentUser', null);
-      updateUserBar();
-      showLoginModal(true);
-      showFeedback("Sesión cerrada.", true);
-    }
-  };
-  if (!currentUser) showLoginModal(true);
-  updateUserBar();
-
-  // CALENDARIO
-  const calendarGrid = document.getElementById('calendarGrid');
-  const monthYear = document.getElementById('monthYear');
-  const dayOptionsMenu = document.getElementById('dayOptionsMenu');
-  let viewDate = new Date();
-  // workDays ahora guarda el tipo de día ('apoyo', 'torneo') o undefined
-  let workDays = loadData('workDays', {});
-  let changeHistory = loadData('changeHistory', []);
-  
-  let currentClickedDayKey = null; // Para guardar la clave del día que se hizo clic
-
-  function renderCalendar() {
-    let y = viewDate.getFullYear(), m = viewDate.getMonth();
-    monthYear.textContent = viewDate.toLocaleString('es-ES', { month: 'long', year: 'numeric' }).replace(/\b\w/g, l => l.toUpperCase());
-    calendarGrid.innerHTML = '';
-    dayOptionsMenu.style.display = 'none'; // Ocultar menú al renderizar
-
-    let firstDayOfMonth = new Date(y, m, 1);
-    let startingDayOfWeek = (firstDayOfMonth.getDay() + 6) % 7; // Lunes es 0
-
-    // Días del mes anterior
-    let daysInPrevMonth = new Date(y, m, 0).getDate();
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      let day = daysInPrevMonth - startingDayOfWeek + i + 1;
-      let cell = document.createElement('div');
-      cell.className = 'day other-month';
-      cell.textContent = day;
-      calendarGrid.appendChild(cell);
-    }
-
-    // Días del mes actual
-    let daysInCurrentMonth = new Date(y, m + 1, 0).getDate();
-    for (let d = 1; d <= daysInCurrentMonth; d++) {
-      let cell = document.createElement('div');
-      cell.className = 'day';
-      cell.textContent = d;
-      let key = `${y}-${(m + 1).toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
-      
-      const dayType = workDays[key];
-      if (dayType) {
-        if (dayType === 'apoyo') {
-          cell.classList.add('work-apoyo');
-        } else if (dayType === 'torneo') {
-          cell.classList.add('work-torneo');
-        } else { // Si existe algún 'trabajado' antiguo, lo sigue mostrando
-          cell.classList.add('work-general');
+        function showToast(message, duration = 4000) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => { toast.classList.add('show'); }, 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, duration);
         }
-      }
 
-      let now = new Date();
-      if (d === now.getDate() && m === now.getMonth() && y === now.getFullYear()) cell.classList.add('today');
+        function renderCalendar() {
+            calendarGrid.innerHTML = '';
+            monthYearLabel.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            let firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const firstDayAdjusted = (firstDay === 0) ? 6 : firstDay - 1;
 
-      let dot = document.createElement('span');
-      dot.className = 'dot';
-      cell.appendChild(dot);
+            for (let i = 0; i < firstDayAdjusted; i++) {
+                calendarGrid.insertAdjacentHTML('beforeend', '<div class="day empty"></div>');
+            }
 
-      cell.addEventListener('click', function (event) {
-        if (cell.classList.contains('other-month') || !currentUser) {
-          if (!currentUser) showFeedback("Inicia sesión para marcar días", false);
-          return;
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const status = workDays[dateKey] || "Libre";
+                const dayDiv = document.createElement('div');
+                dayDiv.className = `day ${statusClassMap[status]}`;
+                dayDiv.dataset.date = dateKey;
+                dayDiv.innerHTML = `
+                    <div class="day-content">
+                        <span class="day-number">${day}</span>
+                        <span class="status-text">${status === "Libre" ? "" : status}</span>
+                    </div>`;
+                dayDiv.addEventListener('click', () => toggleDayStatus(dayDiv, dateKey));
+                calendarGrid.appendChild(dayDiv);
+            }
+        }
+
+        function toggleDayStatus(dayDiv, dateKey) {
+            const oldStatus = workDays[dateKey] || "Libre";
+            const newStatus = statuses[(statuses.indexOf(oldStatus) + 1) % statuses.length];
+            workDays[dateKey] = newStatus;
+            localStorage.setItem('workDays', JSON.stringify(workDays));
+
+            Object.values(statusClassMap).forEach(cls => dayDiv.classList.remove(cls));
+            dayDiv.classList.add(statusClassMap[newStatus]);
+            dayDiv.querySelector('.status-text').textContent = newStatus === "Libre" ? "" : newStatus;
+
+            const formattedDate = dateKey.split('-').reverse().join('-');
+            showToast(`Día ${formattedDate} actualizado a ${newStatus}.`);
         }
         
-        currentClickedDayKey = key; // Guardar la clave del día clicado
-        
-        // Posicionar el menú flotante
-        const rect = cell.getBoundingClientRect();
-        const calendarRect = calendarGrid.getBoundingClientRect();
-
-        // Calcular la posición relativa al contenedor del calendario
-        dayOptionsMenu.style.left = `${rect.left - calendarRect.left + rect.width / 2}px`;
-        dayOptionsMenu.style.top = `${rect.top - calendarRect.top + rect.height / 2}px`;
-        dayOptionsMenu.style.transform = 'translate(-50%, -50%)'; // Centrar sobre el clic
-        dayOptionsMenu.style.display = 'flex';
-        
-        event.stopPropagation(); // Evitar que el clic se propague al documento
-      });
-      calendarGrid.appendChild(cell);
-    }
-
-    // Días del mes siguiente
-    let totalCells = startingDayOfWeek + daysInCurrentMonth;
-    let remainingCells = (7 - (totalCells % 7)) % 7;
-    for (let i = 1; i <= remainingCells; i++) {
-      let cell = document.createElement('div');
-      cell.className = 'day other-month';
-      cell.textContent = i;
-      calendarGrid.appendChild(cell);
-    }
-    disableApp(!currentUser);
-  }
-
-  // Manejar clics en el menú flotante
-  dayOptionsMenu.querySelectorAll('button').forEach(button => {
-    button.addEventListener('click', function() {
-      if (!currentClickedDayKey) return; // No hay día seleccionado
-
-      const type = this.dataset.type; // 'apoyo', 'torneo', 'unmark'
-      let actionText = '';
-
-      if (type === 'unmark') {
-        if (workDays[currentClickedDayKey]) { // Solo desmarcar si ya estaba marcado
-          delete workDays[currentClickedDayKey];
-          actionText = 'Desmarcado como día trabajado';
+        function initializeReportControls() {
+            reportMonthSelect.innerHTML = monthNames.map((name, index) => `<option value="${index}">${name}</option>`).join('');
+            reportMonthSelect.value = localStorage.getItem('reportMonth') || currentMonth;
+            reportYearInput.value = localStorage.getItem('reportYear') || currentYear;
+            reportMonthSelect.addEventListener('change', () => localStorage.setItem('reportMonth', reportMonthSelect.value));
+            reportYearInput.addEventListener('change', () => localStorage.setItem('reportYear', reportYearInput.value));
         }
-      } else {
-        workDays[currentClickedDayKey] = type;
-        if (type === 'apoyo') actionText = 'Marcado como Supervisor de apoyo';
-        else if (type === 'torneo') actionText = 'Marcado como Supervisor de Torneo';
-      }
-      
-      if (actionText) { // Solo si hubo un cambio real
-        addHistory(currentClickedDayKey, actionText, currentUser);
-        saveData('workDays', workDays);
-        renderCalendar(); // Volver a renderizar para actualizar clases
-        renderHistory();
-      }
-      dayOptionsMenu.style.display = 'none'; // Ocultar menú
-      currentClickedDayKey = null; // Limpiar la clave del día
-    });
-  });
 
-  // Ocultar el menú si se hace clic fuera de él
-  document.addEventListener('click', function(event) {
-    if (dayOptionsMenu.style.display === 'flex' && !dayOptionsMenu.contains(event.target) && !event.target.classList.contains('day')) {
-      dayOptionsMenu.style.display = 'none';
-      currentClickedDayKey = null;
-    }
-  });
-
-
-  document.getElementById('prevMonth').onclick = () => { viewDate.setMonth(viewDate.getMonth() - 1); renderCalendar(); };
-  document.getElementById('nextMonth').onclick = () => { viewDate.setMonth(viewDate.getMonth() + 1); renderCalendar(); };
-
-  // HISTORIAL
-  const MAX_SHORT_HISTORY = 10;
-  let showAllHistory = false;
-  function addHistory(dateStr, action, user) {
-    let entry = { date: dateStr, action: action, user: user || currentUser || "", timestamp: Date.now() };
-    changeHistory.unshift(entry);
-    if (changeHistory.length > 80) changeHistory.length = 80; // Limitar el historial a 80 entradas
-    saveData('changeHistory', changeHistory);
-  }
-  function renderHistory() {
-    const list = document.getElementById('historyList');
-    const btn = document.getElementById('showAllBtn');
-    list.innerHTML = "";
-    let entries = showAllHistory ? changeHistory : changeHistory.slice(0, MAX_SHORT_HISTORY);
-    if (!changeHistory.length) {
-      list.innerHTML = "<li>No hay cambios recientes.</li>";
-      btn.style.display = "none";
-      return;
-    }
-    for (let entry of entries) {
-      let dateObj = new Date(entry.timestamp);
-      let dayName = dateObj.toLocaleDateString('es-ES', { weekday: 'short' });
-      let dateStr = dateObj.toLocaleDateString('es-ES');
-      let timeStr = dateObj.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'});
-      let icon = '';
-      let iconClass = '';
-
-      if (entry.action.includes('Marcado como Supervisor de apoyo')) {
-        icon = '🔵'; iconClass = 'mark'; // Azul
-      } else if (entry.action.includes('Marcado como Supervisor de Torneo')) {
-        icon = '🟠'; iconClass = 'mark'; // Naranja
-      } else if (entry.action.includes('Marcado como día trabajado')) { // Para datos antiguos o 'trabajado'
-        icon = '✅'; iconClass = 'mark'; // Verde
-      } else if (entry.action.includes('Desmarcado')) {
-        icon = '❌'; iconClass = 'unmark'; // Rojo
-      }
-
-      let usuario = entry.user ? `<b>${entry.user}</b>` : "";
-      let li = document.createElement('li');
-      li.innerHTML = `<span class="${iconClass}">${icon}</span> [${dayName} ${dateStr} ${timeStr}] ${usuario} ${entry.action}`;
-      list.appendChild(li);
-    }
-    if (changeHistory.length > MAX_SHORT_HISTORY) {
-      btn.style.display = "inline-block";
-      btn.textContent = showAllHistory ? "Ver menos" : "Ver todo";
-    } else {
-      btn.style.display = "none";
-    }
-  }
-  document.getElementById('showAllBtn').onclick = function() {
-    showAllHistory = !showAllHistory;
-    renderHistory();
-  };
-  const historyContent = document.getElementById('historyContent');
-  const toggleIcon = document.getElementById('toggleIcon');
-  let isOpen = false;
-  document.getElementById('historyHeader').onclick = function() {
-    isOpen = !isOpen;
-    historyContent.style.display = isOpen ? 'block' : 'none';
-    toggleIcon.textContent = isOpen ? '−' : '+';
-  };
-
-  // REPORTES
-  const months = [
-    'Enero','Febrero','Marzo','Abril','Mayo','Junio',
-    'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'
-  ];
-  const reportMonth = document.getElementById('reportMonth');
-  months.forEach((m,i) => {
-    let opt = document.createElement('option');
-    opt.value = i;
-    opt.text = m;
-    reportMonth.appendChild(opt);
-  });
-  const now = new Date();
-  reportMonth.value = now.getMonth();
-  document.getElementById('reportYear').value = now.getFullYear();
-  document.getElementById('generateReportBtn').onclick = function() {
-    let m = parseInt(reportMonth.value);
-    let y = parseInt(document.getElementById('reportYear').value);
-    if (isNaN(m) || isNaN(y)) {
-      showFeedback("Completa mes y año para el informe", false); return;
-    }
-    let start = new Date(y, m, 15);
-    let end = new Date(y, m + 1, 15); // Sumamos 1 al mes para el "mes siguiente"
-    if (end.getDate() !== 15) { // Ajuste para meses con diferentes días
-        end.setDate(0); // Último día del mes anterior
-        end.setDate(15); // Día 15 del mes siguiente
-    }
-
-    let daysApoyo = [];
-    let daysTorneo = [];
-    let daysGeneral = []; // Mantener por si hay datos viejos
-    let d = new Date(start);
-    
-    while (d.getTime() < end.getTime()) {
-      let key = d.getFullYear() + '-' + (d.getMonth()+1).toString().padStart(2,'0') + '-' + d.getDate().toString().padStart(2,'0');
-      const dayType = workDays[key];
-      if (dayType) {
-        const formattedDate = key.split('-').reverse().join('/');
-        if (dayType === 'apoyo') {
-          daysApoyo.push(formattedDate);
-        } else if (dayType === 'torneo') {
-          daysTorneo.push(formattedDate);
-        } else { // 'trabajado' si existe en datos antiguos
-          daysGeneral.push(formattedDate);
+        function copyTextToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Informe copiado al portapapeles. ¡Listo!');
+            }).catch(err => {
+                console.error('Error al copiar:', err);
+                showToast('Error al copiar el texto.', 4000);
+            });
         }
-      }
-      d.setDate(d.getDate()+1);
-    }
 
-    let res = `Informe de Días de Supervisor del ${start.getDate()}/${start.getMonth()+1}/${start.getFullYear()} al ${end.getDate()}/${end.getMonth()+1}/${end.getFullYear()}:\n\n`;
-    
-    res += `Días de Supervisor de apoyo (${daysApoyo.length}):\n`;
-    res += daysApoyo.length ? daysApoyo.join(', ') : "Ninguno.";
-    res += `\n\nDías de Supervisor de Torneo (${daysTorneo.length}):\n`;
-    res += daysTorneo.length ? daysTorneo.join(', ') : "Ninguno.";
-
-    // Solo añadir esta sección si hay días generales, para no confundir
-    if (daysGeneral.length > 0) {
-        res += `\n\nDías trabajados (general - datos anteriores) (${daysGeneral.length}):\n`;
-        res += daysGeneral.length ? daysGeneral.join(', ') : "Ninguno.";
-    }
-
-    res += `\n\nTotal de días de Supervisor: ${daysApoyo.length + daysTorneo.length + daysGeneral.length}`;
-    
-    document.getElementById('reportOutput').textContent = res;
-    copyToClipboard(res);
-    document.getElementById('copyMessage').style.display = "block";
-    setTimeout(()=>document.getElementById('copyMessage').style.display="none", 1700);
-  };
-  function copyToClipboard(text) {
-    if (navigator.clipboard) navigator.clipboard.writeText(text);
-    else {
-      let ta = document.createElement('textarea');
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      document.body.removeChild(ta);
-    }
-  }
-  // EXPORTAR / IMPORTAR / BORRAR
-  document.getElementById('exportBtn').onclick = function() {
-    let data = { workDays: workDays, changeHistory: changeHistory, users: users };
-    let blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
-    let url = URL.createObjectURL(blob);
-    let a = document.createElement('a');
-    a.href = url;
-    a.download = `supervisor_backup_${new Date().toISOString().slice(0,10)}.json`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    showFeedback("Datos exportados correctamente.");
-  };
-  document.getElementById('importBtn').onclick = function() {
-    document.getElementById('importFile').click();
-  };
-  document.getElementById('importFile').onchange = function(e) {
-    let file = e.target.files[0];
-    if (!file) return;
-    let reader = new FileReader();
-    reader.onload = function(ev) {
-      try {
-        let imported = JSON.parse(ev.target.result);
-        // Validar que los datos importados tienen las estructuras esperadas
-        if (!imported.workDays || !imported.changeHistory || !imported.users) {
-          showFeedback("Archivo de respaldo inválido. Faltan datos esenciales.", false);
-          return;
+        function generateReport() {
+            const reportMonth = parseInt(reportMonthSelect.value);
+            const reportYear = parseInt(reportYearInput.value);
+            let startDate = new Date(reportYear, reportMonth, 15);
+            let endDate = new Date(reportYear, reportMonth + 1, 15);
+            let supervisorDays = [];
+            
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                if (workDays[dateKey] === "Supervisor") {
+                    const formattedDate = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                    supervisorDays.push(formattedDate);
+                }
+            }
+            
+            const startMonthName = monthNames[startDate.getMonth()];
+            const endMonthName = monthNames[endDate.getMonth()];
+            
+            let reportText = `Informe de días de Supervisor\n`;
+            reportText += `Del 15 de ${startMonthName} ${startDate.getFullYear()} al 15 de ${endMonthName} ${endDate.getFullYear()}\n\n`;
+            reportText += `**Cantidad de días: ${supervisorDays.length}**\n`;
+            reportText += "--------------------------------------\n";
+            reportText += supervisorDays.length > 0 ? supervisorDays.map(day => `- ${day}`).join('\n') : "No se registraron días de Supervisor.";
+            reportText += "\n--------------------------------------";
+            
+            reportOutput.textContent = reportText;
+            copyTextToClipboard(reportText);
         }
-        if (!confirm("¿Estás seguro de que quieres importar estos datos? Se reemplazarán todos tus datos actuales.")) return;
-        workDays = imported.workDays;
-        changeHistory = imported.changeHistory;
-        users = imported.users;
-        saveData('workDays', workDays);
-        saveData('changeHistory', changeHistory);
-        saveData('users', users);
-        saveData('currentUser', null); // Forzar re-login después de la importación
-        showFeedback("¡Datos importados con éxito! Recargando la aplicación...");
-        setTimeout(()=>location.reload(), 1200);
-      } catch (err) {
-        showFeedback("Error al importar el archivo: " + err.message, false);
-      }
-    };
-    reader.onerror = function() {
-        showFeedback("No se pudo leer el archivo.", false);
-    };
-    reader.readAsText(file);
-  };
-  document.getElementById('clearAllBtn').onclick = function() {
-    if (!confirm("¿Estás seguro de que quieres eliminar TODOS los datos almacenados? Esta acción es irreversible.")) return;
-    localStorage.clear();
-    showFeedback("Todos los datos han sido borrados. Recargando la aplicación...");
-    setTimeout(()=>location.reload(), 1200);
-  };
-  renderCalendar();
-  renderHistory();
-})();
-</script>
+
+        // --- FUNCIONES DE IMPORTAR/EXPORTAR ---
+        function exportData() {
+            const dataStr = JSON.stringify(workDays, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'calendario-trabajo-backup.json';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast('Datos exportados correctamente.');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    // Validación simple para asegurar que es un objeto
+                    if (typeof importedData === 'object' && importedData !== null && !Array.isArray(importedData)) {
+                        workDays = importedData;
+                        localStorage.setItem('workDays', JSON.stringify(workDays));
+                        renderCalendar();
+                        showToast('¡Datos importados con éxito!');
+                    } else {
+                        throw new Error('El formato del archivo no es válido.');
+                    }
+                } catch (error) {
+                    console.error('Error al importar el archivo:', error);
+                    showToast('Error: El archivo no es válido o está dañado.');
+                } finally {
+                    // Resetear el valor del input para permitir importar el mismo archivo de nuevo
+                    fileInput.value = '';
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- MANEJADORES DE EVENTOS ---
+        prevMonthBtn.addEventListener('click', () => {
+            currentMonth = (currentMonth === 0) ? 11 : currentMonth - 1;
+            if (currentMonth === 11) currentYear--;
+            renderCalendar();
+        });
+
+        nextMonthBtn.addEventListener('click', () => {
+            currentMonth = (currentMonth === 11) ? 0 : currentMonth + 1;
+            if (currentMonth === 0) currentYear++;
+            renderCalendar();
+        });
+
+        generateReportBtn.addEventListener('click', generateReport);
+        exportDataBtn.addEventListener('click', exportData);
+        importDataBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', importData);
+
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            themeToggleBtn.textContent = isDarkMode ? '☀️' : '🌙';
+            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+        });
+
+        // --- INICIALIZACIÓN ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                themeToggleBtn.textContent = '☀️';
+            } else {
+                themeToggleBtn.textContent = '🌙';
+            }
+            renderCalendar();
+            initializeReportControls();
+        });
+    </script>
 </body>
 </html>
