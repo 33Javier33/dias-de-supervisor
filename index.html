@@ -2,8 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calendario de Trabajo Avanzado</title>
+    <!-- Viewport para asegurar que la escala sea correcta en móviles -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Calendario de Trabajo</title>
     <style>
         /* --- Tema Claro (Predeterminado) y Variables Globales --- */
         :root {
@@ -24,7 +25,6 @@
             --data-btn-hover-bg: #5a6268;
             --day-default-bg: #fdfefe;
             --day-default-border: #e9edf2;
-            --day-today-border: #007bff;
             --status-supervisor-bg: #e0f2f7;
             --status-supervisor-border: #b3e0ed;
             --status-supervisor-text: #005f73;
@@ -34,8 +34,9 @@
             --input-bg: #f8f9fa;
             --input-border: #ced4da;
             --report-output-bg: #e9ecef;
-            --modal-overlay-bg: rgba(0, 0, 0, 0.5);
-            --note-indicator-color: #007bff;
+            --menu-bg: #ffffff;
+            --menu-text: #2c3e50;
+            --menu-hover-bg: #f0f2f5;
         }
 
         /* --- Tema Oscuro --- */
@@ -50,7 +51,6 @@
             --header-text-color: #ffffff;
             --day-default-bg: #2c2c2c;
             --day-default-border: #3a3a3a;
-            --day-today-border: #4dabf7;
             --status-supervisor-bg: #003f5c;
             --status-supervisor-border: #005f73;
             --status-supervisor-text: #a7d8e8;
@@ -60,201 +60,279 @@
             --input-bg: #333333;
             --input-border: #555555;
             --report-output-bg: #252525;
-            --modal-overlay-bg: rgba(0, 0, 0, 0.7);
-            --note-indicator-color: #4dabf7;
+            --menu-bg: #1e1e1e;
+            --menu-text: #e0e0e0;
+            --menu-hover-bg: #333333;
         }
 
-        /* --- Estilos Generales --- */
+        /* --- Estilos Generales Optimizados para Móvil --- */
+        html {
+            -webkit-text-size-adjust: 100%; /* Previene el zoom de texto en iOS */
+        }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
-            min-height: 100vh; background-color: var(--bg-color); color: var(--text-color);
-            padding: 20px; margin: 0; box-sizing: border-box; transition: background-color 0.3s, color 0.3s;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding-top: 60px; /* Espacio para el header fijo */
+            transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden; /* Previene scroll horizontal */
         }
 
-        /* --- Contenedores Principales --- */
-        .container-box {
+        main {
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        /* --- Header Fijo y Menú Hamburguesa --- */
+        .app-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background-color: var(--container-bg);
+            box-shadow: 0 2px 10px var(--shadow-color);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            z-index: 1000;
+            box-sizing: border-box;
+        }
+
+        #menu-toggle {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            z-index: 1002;
+        }
+
+        .hamburger-icon {
+            width: 24px;
+            height: 20px;
+            position: relative;
+        }
+
+        .hamburger-icon span {
+            display: block; position: absolute; height: 3px; width: 100%;
+            background: var(--text-color); border-radius: 3px; left: 0;
+            transition: all 0.3s ease-in-out;
+        }
+        .hamburger-icon span:nth-child(1) { top: 0px; }
+        .hamburger-icon span:nth-child(2) { top: 8px; }
+        .hamburger-icon span:nth-child(3) { top: 16px; }
+
+        .app-header.menu-open .hamburger-icon span:nth-child(1) { top: 8px; transform: rotate(135deg); }
+        .app-header.menu-open .hamburger-icon span:nth-child(2) { opacity: 0; left: -24px; }
+        .app-header.menu-open .hamburger-icon span:nth-child(3) { top: 8px; transform: rotate(-135deg); }
+
+        .app-title {
+            margin: 0; font-size: 1.25em; color: var(--header-text-color);
+            text-align: center; flex-grow: 1; font-weight: 600;
+        }
+
+        #themeToggle {
+            background-color: transparent; font-size: 1.3em; padding: 5px 10px;
+            border: none; cursor: pointer; color: var(--text-color);
+        }
+
+        /* --- Panel de Navegación Lateral --- */
+        .side-nav {
+            position: fixed; top: 0; left: 0; width: 250px; height: 100%;
+            background-color: var(--menu-bg); box-shadow: 2px 0 15px rgba(0,0,0,0.2);
+            transform: translateX(-100%); transition: transform 0.3s ease-in-out;
+            z-index: 999; padding-top: 80px;
+        }
+        .side-nav.open { transform: translateX(0); }
+        .side-nav nav ul { list-style: none; padding: 0; margin: 0; }
+        .side-nav nav a {
+            display: block; padding: 15px 20px; color: var(--menu-text);
+            text-decoration: none; font-size: 1.1em; transition: background-color 0.2s;
+        }
+        .side-nav nav a:hover { background-color: var(--menu-hover-bg); }
+
+        #menu-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5); opacity: 0; visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s; z-index: 998;
+        }
+        #menu-overlay.show { opacity: 1; visibility: visible; }
+
+        /* --- Contenedores de Sección --- */
+        .section-container {
             background-color: var(--container-bg); border-radius: 12px;
-            box-shadow: 0 4px 20px var(--shadow-color); padding: 25px;
-            width: 100%; max-width: 580px; min-width: 320px;
-            box-sizing: border-box; transition: background-color 0.3s; margin-bottom: 20px;
+            box-shadow: 0 4px 20px var(--shadow-color); padding: 15px;
+            width: 100%; box-sizing: border-box;
+            transition: background-color 0.3s; margin-bottom: 20px; display: none;
         }
-        .container-box h3 {
-            margin-top: 0; color: var(--header-text-color); font-size: 1.5em; margin-bottom: 15px; text-align: center;
-        }
+        .section-container.active { display: block; }
 
-        /* --- Encabezado --- */
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .header h2 { margin: 0; font-size: 2em; color: var(--header-text-color); text-align: center; flex-grow: 1; }
-        .header button {
-            background-color: var(--button-bg); color: var(--button-text-color); border: none; padding: 10px 18px;
-            border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold;
-            transition: background-color 0.3s ease, transform 0.1s ease; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        /* --- Encabezado del Calendario --- */
+        .calendar-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px;
         }
-        .header button:hover { background-color: var(--button-hover-bg); transform: translateY(-1px); }
-        #themeToggle { background-color: transparent; font-size: 1.5em; padding: 5px 10px; box-shadow: none; color: var(--text-color); order: -1; }
+        .calendar-header h2 {
+            margin: 0; font-size: 1.6em; color: var(--header-text-color);
+            text-align: center; flex-grow: 1;
+        }
+        .calendar-header button {
+            background-color: var(--button-bg); color: var(--button-text-color); border: none;
+            padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 1em;
+            font-weight: bold; transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+        .calendar-header button:active { transform: translateY(1px); }
 
-        /* --- Calendario --- */
-        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); font-weight: bold; color: var(--text-color-muted); text-align: center; padding-bottom: 12px; border-bottom: 1px solid var(--border-color); margin-bottom: 10px; }
-        .day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; transition: opacity 0.2s ease-in-out; }
+        /* --- Días del Calendario --- */
+        .weekdays {
+            display: grid; grid-template-columns: repeat(7, 1fr); font-weight: bold;
+            color: var(--text-color-muted); text-align: center; padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color); margin-bottom: 10px; font-size: 0.9em;
+        }
+        .day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
         .day {
-            border: 2px solid var(--day-default-border); border-radius: 8px; padding-bottom: 100%;
-            position: relative; cursor: pointer; transition: all 0.2s ease;
+            background-color: var(--day-default-bg); border: 1px solid var(--day-default-border);
+            border-radius: 8px; padding-bottom: 100%; position: relative; cursor: pointer;
+            transition: all 0.2s ease;
         }
-        .day:hover { transform: translateY(-2px); box-shadow: 0 4px 10px var(--shadow-color); }
-        .day.today { border-color: var(--day-today-border); }
+        .day:active { transform: scale(0.95); }
+        .day.empty { background-color: transparent; border-color: transparent; cursor: default; pointer-events: none; }
         .day-content {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex;
-            flex-direction: column; justify-content: space-between; align-items: center; padding: 8px 4px; box-sizing: border-box;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: space-between;
+            align-items: center; padding: 6px 2px; box-sizing: border-box;
         }
-        .day .day-number { font-size: 1.3em; font-weight: bold; color: var(--text-color); }
-        .day .status-text { font-size: 0.8em; font-weight: 600; color: var(--text-color-secondary); text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .note-indicator {
-            width: 6px; height: 6px; background-color: var(--note-indicator-color); border-radius: 50%;
-            position: absolute; top: 5px; right: 5px; display: none;
+        .day .day-number { font-size: 1.1em; font-weight: 600; color: var(--text-color); }
+        .day .status-text {
+            font-size: 0.75em; font-weight: 600; color: var(--text-color-secondary);
+            text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .day.has-note .note-indicator { display: block; }
         .status-libre { background-color: var(--day-default-bg); border-color: var(--day-default-border); }
-        .status-libre.today { border-color: var(--day-today-border); }
-        .status-supervisor { background-color: var(--status-supervisor-bg); border-color: var(--status-supervisor-border) !important; }
+        .status-supervisor { background-color: var(--status-supervisor-bg); border-color: var(--status-supervisor-border); }
         .status-supervisor .status-text, .status-supervisor .day-number { color: var(--status-supervisor-text); }
-        .status-crupier { background-color: var(--status-crupier-bg); border-color: var(--status-crupier-border) !important; }
+        .status-crupier { background-color: var(--status-crupier-bg); border-color: var(--status-crupier-border); }
         .status-crupier .status-text, .status-crupier .day-number { color: var(--status-crupier-text); }
-        #supervisor-counter { text-align: center; margin-top: 15px; font-weight: bold; color: var(--text-color-secondary); }
 
-        /* --- Sección de Informe --- */
-        .report-controls { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 15px; }
-        .report-controls .control-group { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; width: 100%; }
-        .report-controls label { font-size: 0.95em; color: var(--text-color-secondary); }
-        .report-controls select, .report-controls input[type="number"] { padding: 8px; border: 1px solid var(--input-border); border-radius: 5px; font-size: 1em; background-color: var(--input-bg); color: var(--text-color); }
-        .report-controls input[type="number"] { width: 80px; text-align: center; }
-        #generateReportBtn { background-color: var(--report-btn-bg); margin-top: 10px; }
-        #generateReportBtn:hover { background-color: var(--report-btn-hover-bg); }
+        /* --- Sección de Gestión de Datos y Reporte --- */
+        .data-management-container h3, .report-section h3 {
+            margin-top: 0; color: var(--header-text-color); font-size: 1.2em;
+            margin-bottom: 20px; text-align: center;
+        }
+        .data-buttons { display: flex; justify-content: center; gap: 15px; }
+        .data-buttons button, .report-section button {
+            color: var(--button-text-color); border: none; padding: 12px 20px;
+            border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+        .data-buttons button { background-color: var(--data-btn-bg); }
+        .report-section button { background-color: var(--report-btn-bg); margin-top: 15px; }
+        .data-buttons button:active, .report-section button:active { transform: translateY(1px); }
+
+        .report-section { text-align: center; }
+        .report-controls { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 15px; }
+        .report-controls .control-group { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 100%; }
+        .report-controls label { font-size: 0.95em; color: var(--text-color-secondary); white-space: nowrap; }
+        .report-controls select, .report-controls input[type="number"] {
+            padding: 8px; border: 1px solid var(--input-border); border-radius: 5px; font-size: 1em;
+            background-color: var(--input-bg); color: var(--text-color); width: 100%; box-sizing: border-box;
+        }
+        .report-controls input[type="number"] { width: 100px; text-align: center; }
+
         .report-output {
-            background-color: var(--report-output-bg); border: 1px solid var(--input-border); color: var(--text-color);
+            background-color: var(--report-output-bg); border: 1px solid var(--input-border);
             border-radius: 8px; padding: 15px; text-align: left; white-space: pre-wrap; word-wrap: break-word;
             font-family: monospace; font-size: 0.9em; min-height: 50px; max-height: 200px;
-            overflow-y: auto; margin-top: 15px; cursor: text;
+            overflow-y: auto; margin-top: 15px; color: var(--text-color);
         }
 
-        /* --- Sección de Estadísticas (Colapsable) --- */
-        .stats-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 10px;}
-        .stats-header h3 { margin-bottom: 0; }
-        .stats-header .toggle-icon { font-size: 1.8em; font-weight: bold; transition: transform 0.3s ease; }
-        .stats-content { max-height: 0; overflow: hidden; transition: max-height 0.4s ease-out, opacity 0.4s ease-out, margin-top 0.4s ease-out; opacity: 0; }
-        .stats-content.expanded { max-height: 600px; opacity: 1; margin-top: 15px; }
-        .stats-controls { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px; }
-        .stats-controls label { font-weight: bold; }
-        .stats-controls select { padding: 8px; border: 1px solid var(--input-border); border-radius: 5px; background-color: var(--input-bg); color: var(--text-color); }
-        #stats-results table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        #stats-results th, #stats-results td { padding: 10px; border: 1px solid var(--border-color); text-align: center; }
-        #stats-results th { background-color: var(--day-default-bg); }
-        #stats-results .total-row { font-weight: bold; }
-
-        /* --- Modal de Notas --- */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--modal-overlay-bg);
-            display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 0; pointer-events: none;
-            transition: opacity 0.3s ease;
+        /* --- Estilos de Notificaciones Tostador --- */
+        #toast-container {
+            position: fixed; top: 70px; right: 10px; z-index: 9999;
+            width: calc(100% - 20px); display: flex; flex-direction: column; align-items: center; gap: 10px;
         }
-        .modal-overlay.show { opacity: 1; pointer-events: auto; }
-        .modal-content {
-            background-color: var(--container-bg); padding: 25px; border-radius: 12px;
-            width: 90%; max-width: 400px; box-shadow: 0 5px 25px rgba(0,0,0,0.2);
-            transform: scale(0.9); transition: transform 0.3s ease;
+        .toast {
+            background-color: #2c3e50; color: white; padding: 12px 20px;
+            border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            font-size: 0.95em; opacity: 0; transform: translateY(-20px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
         }
-        .modal-overlay.show .modal-content { transform: scale(1); }
-        #modal-date { margin: 0 0 15px 0; font-size: 1.5em; text-align: center; color: var(--header-text-color); }
-        #modal-status { padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; margin-bottom: 15px; cursor: pointer; user-select: none; transition: background-color 0.2s; }
-        #modal-note {
-            width: 100%; height: 100px; padding: 10px; border: 1px solid var(--input-border);
-            border-radius: 8px; background-color: var(--input-bg); color: var(--text-color);
-            font-family: inherit; font-size: 1em; resize: vertical; margin-bottom: 15px; box-sizing: border-box;
-        }
-        .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; }
-        #modal-save { background-color: var(--report-btn-bg); }
-        #modal-save:hover { background-color: var(--report-btn-hover-bg); }
-        #modal-cancel { background-color: var(--data-btn-bg); }
-        #modal-cancel:hover { background-color: var(--data-btn-hover-bg); }
+        .toast.show { opacity: 1; transform: translateY(0); }
         
-        /* Botones y notificaciones */
-        .data-buttons { display: flex; justify-content: center; gap: 15px; }
-        .data-buttons button, .modal-buttons button, #generateReportBtn { color: var(--button-text-color); border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background-color 0.3s ease, transform 0.1s ease; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); padding: 12px 20px; font-size: 1em; }
-        .data-buttons button:hover, .modal-buttons button:hover, #generateReportBtn:hover { transform: translateY(-1px); }
-        .data-buttons button { background-color: var(--data-btn-bg); }
-        .data-buttons button:hover { background-color: var(--data-btn-hover-bg); }
-        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
-        .toast { background-color: #2c3e50; color: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); font-size: 0.95em; opacity: 0; transform: translateX(100%); transition: opacity 0.5s ease, transform 0.5s ease; }
-        .toast.show { opacity: 1; transform: translateX(0); }
+        /* --- Footer --- */
+        footer {
+            text-align: center; padding: 20px; color: var(--text-color-muted);
+            font-size: 0.9em; width: 100%;
+        }
     </style>
 </head>
 <body>
     <div id="toast-container"></div>
+    <div id="menu-overlay"></div>
 
-    <div class="container-box">
-        <div class="header">
-            <button id="themeToggle">🌙</button>
-            <button id="prevMonth">&lt;</button>
-            <h2 id="monthYear"></h2>
-            <button id="nextMonth">&gt;</button>
-        </div>
-        <div class="weekdays">
-            <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
-        </div>
-        <div id="calendarGrid" class="day-grid"></div>
-        <div id="supervisor-counter"></div>
-    </div>
-
-    <div class="container-box">
-        <h3>Gestión de Datos</h3>
-        <div class="data-buttons">
-            <button id="importDataBtn">Importar Datos</button>
-            <button id="exportDataBtn">Exportar Datos</button>
-        </div>
-        <input type="file" id="fileInput" accept=".json" style="display: none;">
-    </div>
-
-    <div class="container-box">
-        <h3>Generar Informe de Supervisor</h3>
-        <div class="report-controls">
-            <div class="control-group">
-                <label>Informe del 15 de:</label>
-                <select id="reportMonth"></select>
-                <input type="number" id="reportYear">
+    <header class="app-header">
+        <button id="menu-toggle" aria-label="Abrir menú">
+            <div class="hamburger-icon">
+                <span></span>
+                <span></span>
+                <span></span>
             </div>
-            <div class="control-group">
-                <label>al 14 del mes siguiente</label>
+        </button>
+        <h1 class="app-title">Calendario</h1>
+        <button id="themeToggle">🌙</button>
+    </header>
+
+    <div class="side-nav" id="side-nav">
+        <nav>
+            <ul>
+                <li><a href="#" class="nav-link" data-section="calendar-section">📅 Calendario</a></li>
+                <li><a href="#" class="nav-link" data-section="data-management-section">💾 Gestión de Datos</a></li>
+                <li><a href="#" class="nav-link" data-section="report-section">📄 Generar Informe</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <main>
+        <div id="calendar-section" class="section-container active">
+            <div class="calendar-header">
+                <button id="prevMonth">&lt;</button>
+                <h2 id="monthYear"></h2>
+                <button id="nextMonth">&gt;</button>
+            </div>
+            <div class="weekdays">
+                <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+            </div>
+            <div id="calendarGrid" class="day-grid"></div>
+        </div>
+
+        <div id="data-management-section" class="section-container">
+            <h3>Gestión de Datos</h3>
+            <div class="data-buttons">
+                <button id="importDataBtn">Importar</button>
+                <button id="exportDataBtn">Exportar</button>
+            </div>
+            <input type="file" id="fileInput" accept=".json" style="display: none;">
+        </div>
+
+        <div id="report-section" class="section-container">
+            <h3>Generar Informe de Supervisor</h3>
+            <div class="report-controls">
+                <div class="control-group">
+                    <label>Informe del 15 de:</label>
+                    <select id="reportMonth"></select>
+                    <input type="number" id="reportYear" min="2000" max="2100">
+                </div>
+            </div>
+            <button id="generateReportBtn">Generar y Copiar</button>
+            <div class="report-output" id="reportOutput">
+                Selecciona mes/año y genera el informe. Se copiará automáticamente.
             </div>
         </div>
-        <button id="generateReportBtn">Generar y Copiar Informe</button>
-        <div class="report-output" id="reportOutput">El informe para WhatsApp aparecerá aquí...</div>
-    </div>
+    </main>
     
-    <div class="container-box" id="stats-section">
-        <div class="stats-header" id="statsHeader">
-            <h3>Estadísticas de Trabajo</h3>
-            <span class="toggle-icon">+</span>
-        </div>
-        <div class="stats-content" id="statsContent">
-            <div class="stats-controls">
-                <label for="statsYear">Seleccionar Año:</label>
-                <select id="statsYear"></select>
-            </div>
-            <div id="stats-results"></div>
-        </div>
-    </div>
-
-    <div id="note-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 id="modal-date"></h3>
-            <div id="modal-status"></div>
-            <textarea id="modal-note" placeholder="Añade una nota para este día..."></textarea>
-            <div class="modal-buttons">
-                <button id="modal-cancel">Cancelar</button>
-                <button id="modal-save">Guardar</button>
-            </div>
-        </div>
-    </div>
+    <footer>
+        CarlosPN Interactive®
+    </footer>
 
     <script>
         // --- Elementos del DOM ---
@@ -263,54 +341,58 @@
         const prevMonthBtn = document.getElementById('prevMonth');
         const nextMonthBtn = document.getElementById('nextMonth');
         const themeToggleBtn = document.getElementById('themeToggle');
-        const supervisorCounter = document.getElementById('supervisor-counter');
-        const importDataBtn = document.getElementById('importDataBtn');
-        const exportDataBtn = document.getElementById('exportDataBtn');
-        const fileInput = document.getElementById('fileInput');
-        
-        // Reporte
         const generateReportBtn = document.getElementById('generateReportBtn');
         const reportOutput = document.getElementById('reportOutput');
         const reportMonthSelect = document.getElementById('reportMonth');
         const reportYearInput = document.getElementById('reportYear');
+        const toastContainer = document.getElementById('toast-container');
+        const importDataBtn = document.getElementById('importDataBtn');
+        const exportDataBtn = document.getElementById('exportDataBtn');
+        const fileInput = document.getElementById('fileInput');
+        const menuToggle = document.getElementById('menu-toggle');
+        const sideNav = document.getElementById('side-nav');
+        const menuOverlay = document.getElementById('menu-overlay');
+        const appHeader = document.querySelector('.app-header');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const sections = document.querySelectorAll('.section-container');
+        const appTitle = document.querySelector('.app-title');
         
-        // Estadísticas
-        const statsHeader = document.getElementById('statsHeader');
-        const statsContent = document.getElementById('statsContent');
-        const statsToggleIcon = statsHeader.querySelector('.toggle-icon');
-        const statsYearSelect = document.getElementById('statsYear');
-        const statsResults = document.getElementById('stats-results');
-        
-        // Modal
-        const noteModal = document.getElementById('note-modal');
-        const modalDate = document.getElementById('modal-date');
-        const modalStatus = document.getElementById('modal-status');
-        const modalNote = document.getElementById('modal-note');
-        const modalSaveBtn = document.getElementById('modal-save');
-        const modalCancelBtn = document.getElementById('modal-cancel');
-
-        // --- Estado de la Aplicación ---
+        // --- Estado de la aplicación ---
         let currentDate = new Date();
         let currentMonth = currentDate.getMonth();
         let currentYear = currentDate.getFullYear();
-        const statuses = ["Libre", "Supervisor"]; 
-        const statusClassMap = { "Libre": "status-libre", "Supervisor": "status-supervisor", "Crupier": "status-crupier" };
+        const statuses = ["Libre", "Supervisor", "Crupier"];
+        const statusClassMap = {
+            "Libre": "status-libre",
+            "Supervisor": "status-supervisor",
+            "Crupier": "status-crupier"
+        };
         let workDays = JSON.parse(localStorage.getItem('workDays')) || {};
-        let workNotes = JSON.parse(localStorage.getItem('workNotes')) || {};
-        const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-        let currentlyEditingDateKey = null;
+        const monthNames = [
+            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        ];
 
-        // --- FUNCIONES PRINCIPALES ---
+        // --- FUNCIONES ---
+
+        function showToast(message, duration = 3000) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            toastContainer.appendChild(toast);
+            setTimeout(() => { toast.classList.add('show'); }, 10);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, duration);
+        }
 
         function renderCalendar() {
             calendarGrid.innerHTML = '';
             monthYearLabel.textContent = `${monthNames[currentMonth]} ${currentYear}`;
-            
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
             let firstDay = new Date(currentYear, currentMonth, 1).getDay();
             const firstDayAdjusted = (firstDay === 0) ? 6 : firstDay - 1;
-            const today = new Date();
-            let supervisorCount = 0;
 
             for (let i = 0; i < firstDayAdjusted; i++) {
                 calendarGrid.insertAdjacentHTML('beforeend', '<div class="day empty"></div>');
@@ -319,98 +401,59 @@
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const status = workDays[dateKey] || "Libre";
-                if (status === 'Supervisor') supervisorCount++;
-                const note = workNotes[dateKey] || "";
-
                 const dayDiv = document.createElement('div');
-                const displayStatus = statuses.includes(status) ? status : "Libre";
-                dayDiv.className = `day ${statusClassMap[displayStatus]}`;
-
-                if (note) dayDiv.classList.add('has-note');
-                if (today.getFullYear() === currentYear && today.getMonth() === currentMonth && today.getDate() === day) {
-                    dayDiv.classList.add('today');
-                }
+                dayDiv.className = `day ${statusClassMap[status]}`;
                 dayDiv.dataset.date = dateKey;
                 dayDiv.innerHTML = `
                     <div class="day-content">
                         <span class="day-number">${day}</span>
-                        <span class="status-text">${displayStatus === "Libre" ? "" : displayStatus}</span>
-                    </div>
-                    <div class="note-indicator"></div>`;
-                dayDiv.addEventListener('click', () => openModal(dateKey));
+                        <span class="status-text">${status === "Libre" ? "" : status}</span>
+                    </div>`;
+                dayDiv.addEventListener('click', () => toggleDayStatus(dayDiv, dateKey));
                 calendarGrid.appendChild(dayDiv);
             }
-            supervisorCounter.textContent = `Días de Supervisor este mes: ${supervisorCount}`;
-            if(statsContent.classList.contains('expanded')) generateAndShowStats();
         }
 
-        // --- Lógica del Modal de Notas ---
-        function openModal(dateKey) {
-            currentlyEditingDateKey = dateKey;
-            let status = workDays[dateKey] || "Libre";
-            if (!statuses.includes(status)) {
-                status = "Libre";
-            }
-            const note = workNotes[dateKey] || "";
-            const [year, month, day] = dateKey.split('-');
-            modalDate.textContent = `${day} de ${monthNames[parseInt(month) - 1]} de ${year}`;
-            modalStatus.textContent = status;
-            modalStatus.className = statusClassMap[status];
-            modalStatus.dataset.status = status;
-            modalNote.value = note;
-            noteModal.classList.add('show');
-        }
-        function closeModal() {
-            noteModal.classList.remove('show');
-            currentlyEditingDateKey = null;
-        }
-        function changeModalStatus() {
-            let currentStatus = modalStatus.dataset.status;
-            const nextIndex = (statuses.indexOf(currentStatus) + 1) % statuses.length;
-            const newStatus = statuses[nextIndex];
-            modalStatus.textContent = newStatus;
-            modalStatus.className = statusClassMap[newStatus];
-            modalStatus.dataset.status = newStatus;
-        }
-        function saveDataFromModal() {
-            if (!currentlyEditingDateKey) return;
-            const newStatus = modalStatus.dataset.status;
-            const newNote = modalNote.value.trim();
-            workDays[currentlyEditingDateKey] = newStatus;
-            if (newNote) {
-                workNotes[currentlyEditingDateKey] = newNote;
+        function toggleDayStatus(dayDiv, dateKey) {
+            const oldStatus = workDays[dateKey] || "Libre";
+            const newStatus = statuses[(statuses.indexOf(oldStatus) + 1) % statuses.length];
+            if (newStatus === "Libre") {
+                delete workDays[dateKey];
             } else {
-                delete workNotes[currentlyEditingDateKey];
+                workDays[dateKey] = newStatus;
             }
             localStorage.setItem('workDays', JSON.stringify(workDays));
-            localStorage.setItem('workNotes', JSON.stringify(workNotes));
-            showToast('Día guardado correctamente.');
-            closeModal();
-            renderCalendar();
-        }
 
-        // --- Lógica de Informe de WhatsApp ---
+            Object.values(statusClassMap).forEach(cls => dayDiv.classList.remove(cls));
+            dayDiv.classList.add(statusClassMap[newStatus]);
+            dayDiv.querySelector('.status-text').textContent = newStatus === "Libre" ? "" : newStatus;
+        }
+        
         function initializeReportControls() {
             reportMonthSelect.innerHTML = monthNames.map((name, index) => `<option value="${index}">${name}</option>`).join('');
-            const now = new Date();
-            reportMonthSelect.value = localStorage.getItem('reportMonth') || now.getMonth();
-            reportYearInput.value = localStorage.getItem('reportYear') || now.getFullYear();
+            reportMonthSelect.value = localStorage.getItem('reportMonth') || currentMonth;
+            reportYearInput.value = localStorage.getItem('reportYear') || currentYear;
             reportMonthSelect.addEventListener('change', () => localStorage.setItem('reportMonth', reportMonthSelect.value));
             reportYearInput.addEventListener('change', () => localStorage.setItem('reportYear', reportYearInput.value));
         }
 
-        function copyTextToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                showToast('Informe copiado al portapapeles. ¡Listo!');
-            }).catch(err => {
-                showToast('Error al copiar el texto.', 4000);
-            });
+        async function copyTextToClipboard(text) {
+            if (!navigator.clipboard) {
+                showToast('El portapapeles no es compatible en este navegador.');
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast('Informe copiado al portapapeles.');
+            } catch (err) {
+                console.error('Error al copiar:', err);
+                showToast('Error al copiar el informe.');
+            }
         }
 
         function generateReport() {
             const reportMonth = parseInt(reportMonthSelect.value);
             const reportYear = parseInt(reportYearInput.value);
-            // CORREGIDO: El rango es del 15 al 14 del mes siguiente
             let startDate = new Date(reportYear, reportMonth, 15);
             let endDate = new Date(reportYear, reportMonth + 1, 14);
             let supervisorDays = [];
@@ -418,172 +461,111 @@
             for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
                 const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                 if (workDays[dateKey] === "Supervisor") {
-                    const formattedDate = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                    const formattedDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
                     supervisorDays.push(formattedDate);
                 }
             }
             
             const startMonthName = monthNames[startDate.getMonth()];
-            const endMonthName = monthNames[endDate.getMonth()];
             
-            let reportText = `*Informe de días de Supervisor*\n`;
-            // CORREGIDO: El texto del reporte ahora dice "al 14"
-            reportText += `Del 15 de ${startMonthName} ${startDate.getFullYear()} al 14 de ${endMonthName} ${endDate.getFullYear()}\n\n`;
-            reportText += `*Cantidad de días: ${supervisorDays.length}*\n`;
-            reportText += "--------------------------------------\n";
-            reportText += supervisorDays.length > 0 ? supervisorDays.map(day => `- ${day}`).join('\n') : "No se registraron días de Supervisor.";
-            reportText += "\n--------------------------------------";
+            let reportText = `Supervisor mes de ${startMonthName}\n`;
+            reportText += `Total días: ${supervisorDays.length}\n`;
+            reportText += "-------------------\n";
+            reportText += supervisorDays.length > 0 ? supervisorDays.join('\n') : "Sin días de Supervisor.";
             
             reportOutput.textContent = reportText;
             copyTextToClipboard(reportText);
         }
 
-        // --- Lógica de Estadísticas ---
-        function toggleStatsVisibility() {
-            statsContent.classList.toggle('expanded');
-            if (statsContent.classList.contains('expanded')) {
-                statsToggleIcon.textContent = '-';
-                generateAndShowStats();
-            } else {
-                statsToggleIcon.textContent = '+';
-            }
-        }
-        function populateYearSelector() {
-            const currentYearValue = new Date().getFullYear();
-            statsYearSelect.innerHTML = '';
-            for (let year = currentYearValue - 5; year <= currentYearValue + 5; year++) {
-                const option = document.createElement('option');
-                option.value = year;
-                option.textContent = year;
-                if (year === currentYearValue) option.selected = true;
-                statsYearSelect.appendChild(option);
-            }
-        }
-        
-        function generateAndShowStats() {
-            const year = parseInt(statsYearSelect.value);
-            if (isNaN(year)) return;
-
-            let yearTotalSupervisor = 0;
-            let periodResults = [];
-
-            // Calcular total anual
-            const yearStartDate = new Date(year, 0, 1);
-            const yearEndDate = new Date(year, 11, 31);
-            for (let d = yearStartDate; d <= yearEndDate; d.setDate(d.getDate() + 1)) {
-                const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                if (workDays[dateKey] === 'Supervisor') {
-                    yearTotalSupervisor++;
-                }
-            }
-
-            // Calcular por período
-            for (let month = 0; month < 12; month++) {
-                let periodSupervisorCount = 0;
-                // CORREGIDO: El rango es del 15 al 14 del mes siguiente
-                let startDate = new Date(year, month, 15);
-                let endDate = new Date(year, month + 1, 14);
-                
-                for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                    const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                    if (workDays[dateKey] === 'Supervisor') {
-                        periodSupervisorCount++;
-                    }
-                }
-                const periodName = `${monthNames[month].substring(0,3)} a ${monthNames[endDate.getMonth()].substring(0,3)}`;
-                periodResults.push({ name: periodName, count: periodSupervisorCount });
-            }
-
-            let tableHTML = `
-                <table>
-                    <thead><tr><th>Período</th><th>Días de Supervisor</th></tr></thead>
-                    <tbody>
-                        <tr class="total-row"><td>Total ${year}</td><td>${yearTotalSupervisor}</td></tr>`;
-            periodResults.forEach(p => {
-                tableHTML += `<tr><td>${p.name}</td><td>${p.count}</td></tr>`;
-            });
-            tableHTML += `</tbody></table>`;
-            statsResults.innerHTML = tableHTML;
-        }
-
-        // --- Navegación y Animación ---
-        function changeMonth(offset) {
-            calendarGrid.style.opacity = '0';
-            setTimeout(() => {
-                currentMonth += offset;
-                if (currentMonth < 0) { currentMonth = 11; currentYear--; } 
-                else if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-                renderCalendar();
-                calendarGrid.style.opacity = '1';
-            }, 200);
-        }
-
-        // --- Funciones Auxiliares (Toast, Import/Export) ---
-        function showToast(message, duration = 4000) {
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = message;
-            document.getElementById('toast-container').appendChild(toast);
-            setTimeout(() => { toast.classList.add('show'); }, 10);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                toast.addEventListener('transitionend', () => toast.remove());
-            }, duration);
-        }
+        // --- FUNCIONES DE IMPORTAR/EXPORTAR ---
         function exportData() {
-            const dataToExport = { workDays, workNotes };
-            const dataStr = JSON.stringify(dataToExport, null, 2);
+            const dataStr = JSON.stringify(workDays, null, 2);
             const dataBlob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(dataBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = 'calendario-trabajo-backup.json';
-            document.body.appendChild(link);
+            link.download = `calendario-backup-${new Date().toISOString().split('T')[0]}.json`;
             link.click();
-            document.body.removeChild(link);
             URL.revokeObjectURL(url);
-            showToast('Datos exportados correctamente.');
+            showToast('Datos exportados.');
         }
+
         function importData(event) {
             const file = event.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    const imported = JSON.parse(e.target.result);
-                    if (imported.workDays && typeof imported.workDays === 'object') {
-                        workDays = imported.workDays;
-                        workNotes = imported.workNotes || {};
+                    const importedData = JSON.parse(e.target.result);
+                    if (typeof importedData === 'object' && importedData !== null && !Array.isArray(importedData)) {
+                        workDays = importedData;
                         localStorage.setItem('workDays', JSON.stringify(workDays));
-                        localStorage.setItem('workNotes', JSON.stringify(workNotes));
                         renderCalendar();
-                        showToast('¡Datos importados con éxito!');
-                    } else { throw new Error('Formato de workDays inválido.'); }
-                } catch (error) { showToast('Error: El archivo no es válido.'); } 
-                finally { fileInput.value = ''; }
+                        showToast('Datos importados con éxito.');
+                    } else { throw new Error('Formato de archivo no válido.'); }
+                } catch (error) {
+                    console.error('Error al importar:', error);
+                    showToast('Error: Archivo dañado o no válido.');
+                } finally { fileInput.value = ''; }
             };
             reader.readAsText(file);
         }
+
+        // --- FUNCIONES DEL MENÚ ---
+        function toggleMenu() {
+            sideNav.classList.toggle('open');
+            menuOverlay.classList.toggle('show');
+            appHeader.classList.toggle('menu-open');
+        }
+
+        function switchSection(targetId) {
+            sections.forEach(section => section.classList.remove('active'));
+            const targetSection = document.getElementById(targetId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+                const titleMap = {
+                    'calendar-section': 'Calendario',
+                    'data-management-section': 'Gestión de Datos',
+                    'report-section': 'Informe'
+                };
+                appTitle.textContent = titleMap[targetId] || 'Calendario';
+            }
+            if (sideNav.classList.contains('open')) {
+                toggleMenu();
+            }
+        }
         
         // --- MANEJADORES DE EVENTOS ---
-        prevMonthBtn.addEventListener('click', () => changeMonth(-1));
-        nextMonthBtn.addEventListener('click', () => changeMonth(1));
+        prevMonthBtn.addEventListener('click', () => {
+            currentMonth = (currentMonth === 0) ? 11 : currentMonth - 1;
+            if (currentMonth === 11) currentYear--;
+            renderCalendar();
+        });
+        nextMonthBtn.addEventListener('click', () => {
+            currentMonth = (currentMonth === 11) ? 0 : currentMonth + 1;
+            if (currentMonth === 0) currentYear++;
+            renderCalendar();
+        });
+        generateReportBtn.addEventListener('click', generateReport);
+        exportDataBtn.addEventListener('click', exportData);
+        importDataBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', importData);
         themeToggleBtn.addEventListener('click', () => {
             document.body.classList.toggle('dark-mode');
             const isDarkMode = document.body.classList.contains('dark-mode');
             themeToggleBtn.textContent = isDarkMode ? '☀️' : '🌙';
             localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
         });
-        exportDataBtn.addEventListener('click', exportData);
-        importDataBtn.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', importData);
-        generateReportBtn.addEventListener('click', generateReport);
-        statsHeader.addEventListener('click', toggleStatsVisibility);
-        modalStatus.addEventListener('click', changeModalStatus);
-        modalSaveBtn.addEventListener('click', saveDataFromModal);
-        modalCancelBtn.addEventListener('click', closeModal);
-        noteModal.addEventListener('click', (e) => { if (e.target === noteModal) closeModal(); });
-        statsYearSelect.addEventListener('change', generateAndShowStats);
+
+        menuToggle.addEventListener('click', toggleMenu);
+        menuOverlay.addEventListener('click', toggleMenu);
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const sectionId = e.currentTarget.getAttribute('data-section');
+                switchSection(sectionId);
+            });
+        });
 
         // --- INICIALIZACIÓN ---
         document.addEventListener('DOMContentLoaded', () => {
@@ -594,10 +576,12 @@
             } else {
                 themeToggleBtn.textContent = '🌙';
             }
-            initializeReportControls();
-            populateYearSelector();
             renderCalendar();
+            initializeReportControls();
+            switchSection('calendar-section'); 
         });
     </script>
 </body>
 </html>
+
+
