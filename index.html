@@ -42,6 +42,8 @@
             --menu-bg: #ffffff;
             --menu-text: #2c3e50;
             --menu-hover-bg: #f0f2f5;
+            --modal-overlay-bg: rgba(0, 0, 0, 0.6);
+            --note-indicator-color: #ff4757;
         }
 
         /* --- Tema Oscuro --- */
@@ -68,47 +70,30 @@
             --menu-bg: #1e1e1e;
             --menu-text: #e0e0e0;
             --menu-hover-bg: #333333;
+            --note-indicator-color: #ff6b81;
         }
         
-        body.dark-mode {
-            --theme-color-meta: #121212;
-        }
+        body.dark-mode { --theme-color-meta: #121212; }
 
         /* --- Estilos Generales Optimizados para Móvil --- */
-        html {
-            -webkit-text-size-adjust: 100%;
-        }
+        html { -webkit-text-size-adjust: 100%; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
-            padding-top: 60px;
-            transition: background-color 0.3s, color 0.3s;
+            background-color: var(--bg-color); color: var(--text-color); margin: 0;
+            padding-top: 60px; transition: background-color 0.3s, color 0.3s;
             overflow-x: hidden;
         }
+        main { padding: 15px; box-sizing: border-box; }
 
-        main {
-            padding: 15px;
-            box-sizing: border-box;
-        }
-
-        /* --- Header Fijo y Menú Hamburguesa --- */
+        /* --- Header y Menú Hamburguesa --- */
         .app-header {
             position: fixed; top: 0; left: 0; width: 100%; height: 60px;
             background-color: var(--container-bg); box-shadow: 0 2px 10px var(--shadow-color);
             display: flex; align-items: center; padding: 0 15px;
             z-index: 1000; box-sizing: border-box;
         }
-
-        #menu-toggle {
-            background: none; border: none; cursor: pointer; padding: 10px; z-index: 1002;
-        }
-
-        .hamburger-icon {
-            width: 24px; height: 20px; position: relative;
-        }
-
+        #menu-toggle { background: none; border: none; cursor: pointer; padding: 10px; z-index: 1002; }
+        .hamburger-icon { width: 24px; height: 20px; position: relative; }
         .hamburger-icon span {
             display: block; position: absolute; height: 3px; width: 100%;
             background: var(--text-color); border-radius: 3px; left: 0;
@@ -117,27 +102,24 @@
         .hamburger-icon span:nth-child(1) { top: 0px; }
         .hamburger-icon span:nth-child(2) { top: 8px; }
         .hamburger-icon span:nth-child(3) { top: 16px; }
-
         .app-header.menu-open .hamburger-icon span:nth-child(1) { top: 8px; transform: rotate(135deg); }
         .app-header.menu-open .hamburger-icon span:nth-child(2) { opacity: 0; left: -24px; }
         .app-header.menu-open .hamburger-icon span:nth-child(3) { top: 8px; transform: rotate(-135deg); }
-
         .app-title {
             margin: 0; font-size: 1.25em; color: var(--header-text-color);
             text-align: center; flex-grow: 1; font-weight: 600;
         }
-
         #themeToggle {
             background-color: transparent; font-size: 1.3em; padding: 5px 10px;
             border: none; cursor: pointer; color: var(--text-color);
         }
 
-        /* --- Panel de Navegación Lateral --- */
+        /* --- Panel de Navegación Lateral y Overlay --- */
         .side-nav {
             position: fixed; top: 0; left: 0; width: 250px; height: 100%;
             background-color: var(--menu-bg); box-shadow: 2px 0 15px rgba(0,0,0,0.2);
             transform: translateX(-100%); transition: transform 0.3s ease-in-out;
-            z-index: 999; padding-top: 80px;
+            z-index: 1001; padding-top: 80px;
         }
         .side-nav.open { transform: translateX(0); }
         .side-nav nav ul { list-style: none; padding: 0; margin: 0; }
@@ -145,41 +127,28 @@
             display: block; padding: 15px 20px; color: var(--menu-text);
             text-decoration: none; font-size: 1.1em; transition: background-color 0.2s;
         }
-        .side-nav nav a:hover { background-color: var(--menu-hover-bg); }
-
         #menu-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.5); opacity: 0; visibility: hidden;
+            background-color: var(--modal-overlay-bg); opacity: 0; visibility: hidden;
             transition: opacity 0.3s, visibility 0.3s; z-index: 998;
         }
         #menu-overlay.show { opacity: 1; visibility: visible; }
-
+        
         /* --- Contenedores de Sección --- */
         .section-container {
             background-color: var(--container-bg); border-radius: 12px;
             box-shadow: 0 4px 20px var(--shadow-color); padding: 15px;
-            width: 100%; box-sizing: border-box;
-            transition: background-color 0.3s; margin-bottom: 20px; display: none;
+            width: 100%; box-sizing: border-box; margin-bottom: 20px; display: none;
         }
         .section-container.active { display: block; }
 
-        /* --- Encabezado del Calendario --- */
-        .calendar-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px;
-        }
-        .calendar-header h2 {
-            margin: 0; font-size: 1.6em; color: var(--header-text-color);
-            text-align: center; flex-grow: 1;
-        }
+        /* --- Calendario --- */
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .calendar-header h2 { margin: 0; font-size: 1.6em; color: var(--header-text-color); text-align: center; flex-grow: 1; }
         .calendar-header button {
             background-color: var(--button-bg); color: var(--button-text-color); border: none;
-            padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 1em;
-            font-weight: bold; transition: background-color 0.3s ease, transform 0.1s ease;
+            padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold;
         }
-        .calendar-header button:active { transform: translateY(1px); }
-
-        /* --- Días del Calendario --- */
         .weekdays {
             display: grid; grid-template-columns: repeat(7, 1fr); font-weight: bold;
             color: var(--text-color-muted); text-align: center; padding-bottom: 10px;
@@ -187,9 +156,8 @@
         }
         .day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
         .day {
-            background-color: var(--day-default-bg); border: 1px solid var(--day-default-border);
-            border-radius: 8px; padding-bottom: 100%; position: relative; cursor: pointer;
-            transition: all 0.2s ease;
+            border: 1px solid var(--day-default-border); border-radius: 8px;
+            padding-bottom: 100%; position: relative; cursor: pointer; transition: all 0.2s ease;
         }
         .day:active { transform: scale(0.95); }
         .day.empty { background-color: transparent; border-color: transparent; cursor: default; pointer-events: none; }
@@ -198,18 +166,22 @@
             display: flex; flex-direction: column; justify-content: space-between;
             align-items: center; padding: 6px 2px; box-sizing: border-box;
         }
-        .day .day-number { font-size: 1.1em; font-weight: 600; color: var(--text-color); }
+        .day .day-number { font-size: 1.1em; font-weight: 600; }
         .day .status-text {
-            font-size: 0.75em; font-weight: 600; color: var(--text-color-secondary);
-            text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            font-size: 0.75em; font-weight: 600; text-align: center;
+            width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .status-libre { background-color: var(--day-default-bg); border-color: var(--day-default-border); }
-        .status-supervisor { background-color: var(--status-supervisor-bg); border-color: var(--status-supervisor-border); }
-        .status-supervisor .status-text, .status-supervisor .day-number { color: var(--status-supervisor-text); }
-        .status-crupier { background-color: var(--status-crupier-bg); border-color: var(--status-crupier-border); }
-        .status-crupier .status-text, .status-crupier .day-number { color: var(--status-crupier-text); }
+        .note-indicator {
+            position: absolute; top: 6px; right: 6px; width: 6px; height: 6px;
+            background-color: var(--note-indicator-color); border-radius: 50%;
+        }
 
-        /* --- Sección de Gestión de Datos y Reporte --- */
+        /* Colores de estado */
+        .status-libre { background-color: var(--day-default-bg); color: var(--text-color); }
+        .status-supervisor { background-color: var(--status-supervisor-bg); color: var(--status-supervisor-text); }
+        .status-crupier { background-color: var(--status-crupier-bg); color: var(--status-crupier-text); }
+
+        /* --- Secciones de Gestión y Reporte --- */
         .data-management-container h3, .report-section h3 {
             margin-top: 0; color: var(--header-text-color); font-size: 1.2em;
             margin-bottom: 20px; text-align: center;
@@ -218,13 +190,9 @@
         .data-buttons button, .report-section button {
             color: var(--button-text-color); border: none; padding: 12px 20px;
             border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold;
-            transition: background-color 0.3s ease, transform 0.1s ease;
         }
         .data-buttons button { background-color: var(--data-btn-bg); }
         .report-section button { background-color: var(--report-btn-bg); margin-top: 15px; }
-        .data-buttons button:active, .report-section button:active { transform: translateY(1px); }
-
-        .report-section { text-align: center; }
         .report-controls { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 15px; }
         .report-controls .control-group { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 100%; }
         .report-controls label { font-size: 0.95em; color: var(--text-color-secondary); white-space: nowrap; }
@@ -233,7 +201,6 @@
             background-color: var(--input-bg); color: var(--text-color); width: 100%; box-sizing: border-box;
         }
         .report-controls input[type="number"] { width: 100px; text-align: center; }
-
         .report-output {
             background-color: var(--report-output-bg); border: 1px solid var(--input-border);
             border-radius: 8px; padding: 15px; text-align: left; white-space: pre-wrap; word-wrap: break-word;
@@ -241,10 +208,51 @@
             overflow-y: auto; margin-top: 15px; color: var(--text-color);
         }
 
-        /* --- Estilos de Notificaciones Tostador --- */
+        /* --- Estilos del Modal de Notas --- */
+        #day-editor-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            background-color: var(--modal-overlay-bg);
+            opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s;
+            z-index: 1002;
+        }
+        #day-editor-modal.show { opacity: 1; visibility: visible; }
+        .modal-content {
+            background-color: var(--container-bg); border-radius: 12px;
+            padding: 20px; width: calc(100% - 40px); max-width: 400px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+            transform: scale(0.9); transition: transform 0.3s;
+        }
+        #day-editor-modal.show .modal-content { transform: scale(1); }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;
+        }
+        .modal-header h4 { margin: 0; font-size: 1.2em; color: var(--header-text-color); }
+        .modal-body .form-group { margin-bottom: 15px; }
+        .modal-body label { display: block; font-size: 0.9em; margin-bottom: 5px; color: var(--text-color-secondary); }
+        .modal-body select, .modal-body textarea {
+            width: 100%; padding: 10px; font-size: 1em;
+            border: 1px solid var(--input-border); border-radius: 8px;
+            background-color: var(--input-bg); color: var(--text-color);
+            box-sizing: border-box;
+        }
+        .modal-body textarea { resize: vertical; min-height: 80px; }
+        .modal-footer {
+            display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;
+        }
+        .modal-footer button {
+            padding: 10px 20px; border-radius: 8px; font-size: 1em;
+            font-weight: bold; cursor: pointer; border: none;
+        }
+        #save-day-btn { background-color: var(--button-bg); color: var(--button-text-color); }
+        #cancel-day-btn { background-color: var(--data-btn-bg); color: var(--button-text-color); }
+        
+        /* --- Notificaciones y Footer --- */
         #toast-container {
-            position: fixed; top: 70px; right: 10px; z-index: 9999;
-            width: calc(100% - 20px); display: flex; flex-direction: column; align-items: center; gap: 10px;
+            position: fixed; top: 70px; z-index: 1003;
+            width: calc(100% - 20px); left: 10px; display: flex;
+            flex-direction: column; align-items: center; gap: 10px;
         }
         .toast {
             background-color: #2c3e50; color: white; padding: 12px 20px;
@@ -253,12 +261,7 @@
             transition: opacity 0.4s ease, transform 0.4s ease;
         }
         .toast.show { opacity: 1; transform: translateY(0); }
-        
-        /* --- Footer --- */
-        footer {
-            text-align: center; padding: 20px; color: var(--text-color-muted);
-            font-size: 0.9em; width: 100%;
-        }
+        footer { text-align: center; padding: 20px; color: var(--text-color-muted); font-size: 0.9em; }
     </style>
 </head>
 <body>
@@ -266,17 +269,10 @@
     <div id="menu-overlay"></div>
 
     <header class="app-header">
-        <button id="menu-toggle" aria-label="Abrir menú">
-            <div class="hamburger-icon">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
-        </button>
+        <button id="menu-toggle" aria-label="Abrir menú"><div class="hamburger-icon"><span></span><span></span><span></span></div></button>
         <h1 class="app-title">Calendario</h1>
         <button id="themeToggle">🌙</button>
     </header>
-
     <div class="side-nav" id="side-nav">
         <nav>
             <ul>
@@ -299,7 +295,6 @@
             </div>
             <div id="calendarGrid" class="day-grid"></div>
         </div>
-
         <div id="data-management-section" class="section-container">
             <h3>Gestión de Datos</h3>
             <div class="data-buttons">
@@ -308,7 +303,6 @@
             </div>
             <input type="file" id="fileInput" accept=".json" style="display: none;">
         </div>
-
         <div id="report-section" class="section-container">
             <h3>Generar Informe de Supervisor</h3>
             <div class="report-controls">
@@ -324,22 +318,40 @@
             </div>
         </div>
     </main>
+
+    <div id="day-editor-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 id="modal-date"></h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="status-select">Estado del Día</label>
+                    <select id="status-select">
+                        <option value="Libre">Libre</option>
+                        <option value="Supervisor">Supervisor</option>
+                        <option value="Crupier">Crupier</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="note-input">Notas Adicionales</label>
+                    <textarea id="note-input" placeholder="Añade una nota..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="cancel-day-btn">Cancelar</button>
+                <button id="save-day-btn">Guardar</button>
+            </div>
+        </div>
+    </div>
     
-    <footer>
-        CarlosPN Interactive®
-    </footer>
+    <footer>CarlosPN Interactive®</footer>
 
     <script>
         // --- Registro del Service Worker ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(registration => {
-                        console.log('ServiceWorker registrado con éxito:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('Fallo en el registro de ServiceWorker:', error);
-                    });
+                navigator.serviceWorker.register('./sw.js').catch(e => console.error('Fallo en registro de SW:', e));
             });
         }
         
@@ -353,7 +365,6 @@
         const reportOutput = document.getElementById('reportOutput');
         const reportMonthSelect = document.getElementById('reportMonth');
         const reportYearInput = document.getElementById('reportYear');
-        const toastContainer = document.getElementById('toast-container');
         const importDataBtn = document.getElementById('importDataBtn');
         const exportDataBtn = document.getElementById('exportDataBtn');
         const fileInput = document.getElementById('fileInput');
@@ -365,30 +376,28 @@
         const sections = document.querySelectorAll('.section-container');
         const appTitle = document.querySelector('.app-title');
         
+        const dayEditorModal = document.getElementById('day-editor-modal');
+        const modalDate = document.getElementById('modal-date');
+        const statusSelect = document.getElementById('status-select');
+        const noteInput = document.getElementById('note-input');
+        const saveDayBtn = document.getElementById('save-day-btn');
+        const cancelDayBtn = document.getElementById('cancel-day-btn');
+
         // --- Estado de la aplicación ---
         let currentDate = new Date();
         let currentMonth = currentDate.getMonth();
         let currentYear = currentDate.getFullYear();
-        const statuses = ["Libre", "Supervisor", "Crupier"];
-        const statusClassMap = {
-            "Libre": "status-libre",
-            "Supervisor": "status-supervisor",
-            "Crupier": "status-crupier"
-        };
+        let currentlyEditingDate = null;
         let workDays = JSON.parse(localStorage.getItem('workDays')) || {};
-        const monthNames = [
-            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
-        ];
+        const monthNames = [ "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" ];
 
         // --- FUNCIONES ---
 
         function showToast(message, duration = 3000) {
             const toast = document.createElement('div');
-            toast.className = 'toast';
+            toast.className = 'toast show';
             toast.textContent = message;
-            toastContainer.appendChild(toast);
-            setTimeout(() => { toast.classList.add('show'); }, 10);
+            document.getElementById('toast-container').appendChild(toast);
             setTimeout(() => {
                 toast.classList.remove('show');
                 toast.addEventListener('transitionend', () => toast.remove());
@@ -399,93 +408,69 @@
             calendarGrid.innerHTML = '';
             monthYearLabel.textContent = `${monthNames[currentMonth]} ${currentYear}`;
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-            let firstDay = new Date(currentYear, currentMonth, 1).getDay();
-            const firstDayAdjusted = (firstDay === 0) ? 6 : firstDay - 1;
+            const firstDay = (new Date(currentYear, currentMonth, 1).getDay() + 6) % 7;
 
-            for (let i = 0; i < firstDayAdjusted; i++) {
+            for (let i = 0; i < firstDay; i++) {
                 calendarGrid.insertAdjacentHTML('beforeend', '<div class="day empty"></div>');
             }
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const status = workDays[dateKey] || "Libre";
+                const dayData = workDays[dateKey] || {};
+                const status = dayData.status || 'Libre';
+                const note = dayData.note || '';
+
                 const dayDiv = document.createElement('div');
-                dayDiv.className = `day ${statusClassMap[status]}`;
+                dayDiv.className = `day status-${status.toLowerCase()}`;
                 dayDiv.dataset.date = dateKey;
-                dayDiv.innerHTML = `
-                    <div class="day-content">
+                
+                let dayHTML = `<div class="day-content">
                         <span class="day-number">${day}</span>
                         <span class="status-text">${status === "Libre" ? "" : status}</span>
                     </div>`;
-                dayDiv.addEventListener('click', () => toggleDayStatus(dayDiv, dateKey));
+                
+                if (note.trim() !== '') {
+                    dayHTML += '<div class="note-indicator"></div>';
+                }
+
+                dayDiv.innerHTML = dayHTML;
+                dayDiv.addEventListener('click', () => openDayEditor(dateKey));
                 calendarGrid.appendChild(dayDiv);
             }
         }
 
-        function toggleDayStatus(dayDiv, dateKey) {
-            const oldStatus = workDays[dateKey] || "Libre";
-            const newStatus = statuses[(statuses.indexOf(oldStatus) + 1) % statuses.length];
-            if (newStatus === "Libre") {
-                delete workDays[dateKey];
-            } else {
-                workDays[dateKey] = newStatus;
-            }
-            localStorage.setItem('workDays', JSON.stringify(workDays));
+        function openDayEditor(dateKey) {
+            currentlyEditingDate = dateKey;
+            const dayData = workDays[dateKey] || {};
+            const [year, month, day] = dateKey.split('-');
+            modalDate.textContent = `Editando: ${day}/${month}/${year}`;
+            statusSelect.value = dayData.status || 'Libre';
+            noteInput.value = dayData.note || '';
+            dayEditorModal.classList.add('show');
+        }
 
-            Object.values(statusClassMap).forEach(cls => dayDiv.classList.remove(cls));
-            dayDiv.classList.add(statusClassMap[newStatus]);
-            dayDiv.querySelector('.status-text').textContent = newStatus === "Libre" ? "" : newStatus;
+        function closeDayEditor() {
+            dayEditorModal.classList.remove('show');
+            currentlyEditingDate = null;
         }
         
-        function initializeReportControls() {
-            reportMonthSelect.innerHTML = monthNames.map((name, index) => `<option value="${index}">${name}</option>`).join('');
-            reportMonthSelect.value = localStorage.getItem('reportMonth') || currentMonth;
-            reportYearInput.value = localStorage.getItem('reportYear') || currentYear;
-            reportMonthSelect.addEventListener('change', () => localStorage.setItem('reportMonth', reportMonthSelect.value));
-            reportYearInput.addEventListener('change', () => localStorage.setItem('reportYear', reportYearInput.value));
+        function saveDayData() {
+            if (!currentlyEditingDate) return;
+            const newStatus = statusSelect.value;
+            const newNote = noteInput.value.trim();
+
+            if (newStatus === 'Libre' && newNote === '') {
+                delete workDays[currentlyEditingDate];
+            } else {
+                workDays[currentlyEditingDate] = { status: newStatus, note: newNote };
+            }
+
+            localStorage.setItem('workDays', JSON.stringify(workDays));
+            renderCalendar();
+            closeDayEditor();
+            showToast('Día guardado con éxito.');
         }
 
-        async function copyTextToClipboard(text) {
-            if (!navigator.clipboard) {
-                showToast('El portapapeles no es compatible.');
-                return;
-            }
-            try {
-                await navigator.clipboard.writeText(text);
-                showToast('Informe copiado al portapapeles.');
-            } catch (err) {
-                console.error('Error al copiar:', err);
-                showToast('Error al copiar el informe.');
-            }
-        }
-
-        function generateReport() {
-            const reportMonth = parseInt(reportMonthSelect.value);
-            const reportYear = parseInt(reportYearInput.value);
-            let startDate = new Date(reportYear, reportMonth, 15);
-            let endDate = new Date(reportYear, reportMonth + 1, 14);
-            let supervisorDays = [];
-            
-            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                if (workDays[dateKey] === "Supervisor") {
-                    const formattedDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
-                    supervisorDays.push(formattedDate);
-                }
-            }
-            
-            const startMonthName = monthNames[startDate.getMonth()];
-            
-            let reportText = `Supervisor mes de ${startMonthName}\n`;
-            reportText += `Total días: ${supervisorDays.length}\n`;
-            reportText += "-------------------\n";
-            reportText += supervisorDays.length > 0 ? supervisorDays.join('\n') : "Sin días de Supervisor.";
-            
-            reportOutput.textContent = reportText;
-            copyTextToClipboard(reportText);
-        }
-
-        // --- FUNCIONES DE IMPORTAR/EXPORTAR ---
         function exportData() {
             const dataStr = JSON.stringify(workDays, null, 2);
             const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -498,45 +483,60 @@
             showToast('Datos exportados.');
         }
 
-        // --- SOLUCIÓN APLICADA AQUÍ ---
         function importData(event) {
             const file = event.target.files[0];
             if (!file) return;
-
-            // Limitar a archivos .json
             if (file.type !== "application/json") {
                 showToast("Error: El archivo debe ser de tipo .json", 4000);
-                fileInput.value = ''; // Resetear input
-                return;
+                fileInput.value = ''; return;
             }
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     const importedData = JSON.parse(e.target.result);
-                    // Validación simple para asegurar que es un objeto y no un array u otro tipo
                     if (typeof importedData === 'object' && importedData !== null && !Array.isArray(importedData)) {
                         workDays = importedData;
                         localStorage.setItem('workDays', JSON.stringify(workDays));
                         renderCalendar();
                         showToast('Datos importados con éxito.');
-                    } else {
-                        // Lanza un error si el JSON es válido pero no es un objeto (ej. es solo un número o un array)
-                        throw new Error('El formato del JSON no es un objeto válido.');
-                    }
+                    } else { throw new Error('El formato del JSON no es un objeto válido.'); }
                 } catch (error) {
                     console.error('Error al importar:', error);
-                    // Mensaje amigable para el usuario
                     showToast('Error: El archivo está dañado o no tiene el formato correcto.', 4000);
-                } finally {
-                    // Resetear el valor del input para permitir importar el mismo archivo de nuevo si falla
-                    fileInput.value = '';
-                }
+                } finally { fileInput.value = ''; }
             };
             reader.readAsText(file);
         }
 
-        // --- FUNCIONES DEL MENÚ ---
+        function initializeReportControls() {
+            reportMonthSelect.innerHTML = monthNames.map((name, index) => `<option value="${index}">${name}</option>`).join('');
+            reportMonthSelect.value = localStorage.getItem('reportMonth') || currentMonth;
+            reportYearInput.value = localStorage.getItem('reportYear') || currentYear;
+            reportMonthSelect.addEventListener('change', () => localStorage.setItem('reportMonth', reportMonthSelect.value));
+            reportYearInput.addEventListener('change', () => localStorage.setItem('reportYear', reportYearInput.value));
+        }
+
+        function generateReport() {
+            const reportMonth = parseInt(reportMonthSelect.value);
+            const reportYear = parseInt(reportYearInput.value);
+            let startDate = new Date(reportYear, reportMonth, 15);
+            let endDate = new Date(reportYear, reportMonth + 1, 14);
+            let supervisorDays = [];
+            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+                const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                if (workDays[dateKey] && workDays[dateKey].status === "Supervisor") {
+                    const formattedDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+                    supervisorDays.push(formattedDate);
+                }
+            }
+            const startMonthName = monthNames[startDate.getMonth()];
+            let reportText = `Supervisor mes de ${startMonthName}\n`;
+            reportText += `Total días: ${supervisorDays.length}\n-------------------\n`;
+            reportText += supervisorDays.length > 0 ? supervisorDays.join('\n') : "Sin días de Supervisor.";
+            reportOutput.textContent = reportText;
+            navigator.clipboard.writeText(reportText).then(() => showToast('Informe copiado.'), () => showToast('Error al copiar.'));
+        }
+
         function toggleMenu() {
             sideNav.classList.toggle('open');
             menuOverlay.classList.toggle('show');
@@ -559,22 +559,17 @@
                 toggleMenu();
             }
         }
-        
+
         // --- MANEJADORES DE EVENTOS ---
-        prevMonthBtn.addEventListener('click', () => {
-            currentMonth = (currentMonth === 0) ? 11 : currentMonth - 1;
-            if (currentMonth === 11) currentYear--;
-            renderCalendar();
-        });
-        nextMonthBtn.addEventListener('click', () => {
-            currentMonth = (currentMonth === 11) ? 0 : currentMonth + 1;
-            if (currentMonth === 0) currentYear++;
-            renderCalendar();
-        });
-        generateReportBtn.addEventListener('click', generateReport);
-        exportDataBtn.addEventListener('click', exportData);
+        prevMonthBtn.addEventListener('click', () => { currentMonth = (currentMonth === 0) ? 11 : currentMonth - 1; if (currentMonth === 11) currentYear--; renderCalendar(); });
+        nextMonthBtn.addEventListener('click', () => { currentMonth = (currentMonth === 11) ? 0 : currentMonth + 1; if (currentMonth === 0) currentYear++; renderCalendar(); });
+        saveDayBtn.addEventListener('click', saveDayData);
+        cancelDayBtn.addEventListener('click', closeDayEditor);
+        dayEditorModal.addEventListener('click', (e) => { if (e.target === dayEditorModal) closeDayEditor(); });
         importDataBtn.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', importData);
+        exportDataBtn.addEventListener('click', exportData);
+        generateReportBtn.addEventListener('click', generateReport);
         themeToggleBtn.addEventListener('click', () => {
             document.body.classList.toggle('dark-mode');
             const isDarkMode = document.body.classList.contains('dark-mode');
@@ -582,14 +577,12 @@
             localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
             document.querySelector('meta[name="theme-color"]').setAttribute('content', isDarkMode ? '#121212' : '#ffffff');
         });
-
         menuToggle.addEventListener('click', toggleMenu);
         menuOverlay.addEventListener('click', toggleMenu);
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
                 e.preventDefault();
-                const sectionId = e.currentTarget.getAttribute('data-section');
-                switchSection(sectionId);
+                switchSection(e.currentTarget.getAttribute('data-section'));
             });
         });
 
@@ -600,11 +593,8 @@
             if (isDarkMode) {
                 document.body.classList.add('dark-mode');
                 themeToggleBtn.textContent = '☀️';
-            } else {
-                themeToggleBtn.textContent = '🌙';
             }
             document.querySelector('meta[name="theme-color"]').setAttribute('content', isDarkMode ? '#121212' : '#ffffff');
-            
             renderCalendar();
             initializeReportControls();
             switchSection('calendar-section'); 
