@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Calendario de Trabajo</title>
 
-    <!-- PWA Meta Tags -->
-    <link rel="manifest" href="manifest.json">
+    <!-- PWA Meta Tags - RUTAS CORREGIDAS PARA VERCEL -->
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#ffffff">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
 
     <style>
         /* --- Tema Claro (Predeterminado) y Variables Globales --- */
@@ -351,7 +351,8 @@
         // --- Registro del Service Worker ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(e => console.error('Fallo en registro de SW:', e));
+                // RUTA CORREGIDA PARA VERCEL
+                navigator.serviceWorker.register('/sw.js').catch(e => console.error('Fallo en registro de SW:', e));
             });
         }
         
