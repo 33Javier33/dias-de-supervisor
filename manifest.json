@@ -1,21 +1,21 @@
 {
-"name": "Calendario de Trabajo",
-"short_name": "Calendario",
-"description": "Una aplicación para gestionar turnos y horarios de trabajo.",
-"start_url": "/",
-"display": "standalone",
-"background_color": "#ffffff",
-"theme_color": "#2c3e50",
-"icons": [
-{
-"src": "/icons/icon-192x192.png",
-"type": "image/png",
-"sizes": "192x192"
-},
-{
-"src": "/icons/icon-512x512.png",
-"type": "image/png",
-"sizes": "512x512"
-}
-]
+    "name": "Calendario de Trabajo",
+    "short_name": "Calendario",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "description": "Una aplicación de calendario para gestionar turnos de trabajo.",
+    "icons": [
+        {
+            "src": "icons/icon-192x192.png",
+            "type": "image/png",
+            "sizes": "192x192"
+        },
+        {
+            "src": "icons/icon-512x512.png",
+            "type": "image/png",
+            "sizes": "512x512"
+        }
+    ]
 }
