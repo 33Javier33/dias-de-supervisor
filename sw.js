@@ -1,23 +1,24 @@
-const CACHE_NAME = 'calendario-trabajo-cache-v2'; // Cambié a v2 para forzar la actualización
+const CACHE_NAME = 'calendario-trabajo-cache-v3'; // Incremento la versión para forzar actualización
 const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json'
-  // El navegador cacheará los iconos automáticamente cuando los necesite.
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png'
 ];
 
-// Instalar el Service Worker y cachear los archivos principales
+// Instala el Service Worker y guarda los archivos principales en caché.
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Cache abierto y listo para cachear archivos.');
+        console.log('Cache abierto, guardando archivos...');
         return cache.addAll(urlsToCache);
       })
   );
 });
 
-// Activar el Service Worker y limpiar cachés viejos
+// Activa el Service Worker y elimina las cachés antiguas.
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -33,18 +34,12 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Interceptar peticiones y servir desde el caché si es posible
+// Intercepta las peticiones y las sirve desde la caché si es posible.
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Si la respuesta está en el caché, la retornamos.
-        if (response) {
-          return response;
-        }
-        // Si no, hacemos la petición a la red.
-        return fetch(event.request);
-      }
-    )
+        return response || fetch(event.request);
+      })
   );
 });
