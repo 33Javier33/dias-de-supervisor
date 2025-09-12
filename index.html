@@ -184,6 +184,7 @@
         /* Estilo para el día actual */
         .day.today {
             border: 2px solid var(--button-bg);
+            box-shadow: 0 0 8px var(--button-bg);
         }
 
         /* --- Secciones de Gestión y Reporte --- */
@@ -416,6 +417,7 @@
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
             const firstDay = (new Date(currentYear, currentMonth, 1).getDay() + 6) % 7;
 
+            // Obtener la fecha de hoy para compararla
             const today = new Date();
             const todayDate = today.getDate();
             const todayMonth = today.getMonth();
@@ -434,11 +436,12 @@
                 const dayDiv = document.createElement('div');
                 dayDiv.className = `day status-${status.toLowerCase()}`;
                 dayDiv.dataset.date = dateKey;
-
+                
+                // Aplicar la clase 'today' si el día coincide con la fecha actual
                 if (day === todayDate && currentMonth === todayMonth && currentYear === todayYear) {
                     dayDiv.classList.add('today');
                 }
-                
+
                 let dayHTML = `<div class="day-content">
                         <span class="day-number">${day}</span>
                         <span class="status-text">${status === "Libre" ? "" : status}</span>
@@ -617,4 +620,5 @@
     </script>
 </body>
 </html>
+
 
