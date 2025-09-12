@@ -181,6 +181,11 @@
         .status-supervisor { background-color: var(--status-supervisor-bg); color: var(--status-supervisor-text); }
         .status-crupier { background-color: var(--status-crupier-bg); color: var(--status-crupier-text); }
 
+        /* Estilo para el día actual */
+        .day.today {
+            border: 2px solid var(--button-bg);
+        }
+
         /* --- Secciones de Gestión y Reporte --- */
         .data-management-container h3, .report-section h3 {
             margin-top: 0; color: var(--header-text-color); font-size: 1.2em;
@@ -411,6 +416,11 @@
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
             const firstDay = (new Date(currentYear, currentMonth, 1).getDay() + 6) % 7;
 
+            const today = new Date();
+            const todayDate = today.getDate();
+            const todayMonth = today.getMonth();
+            const todayYear = today.getFullYear();
+
             for (let i = 0; i < firstDay; i++) {
                 calendarGrid.insertAdjacentHTML('beforeend', '<div class="day empty"></div>');
             }
@@ -424,6 +434,10 @@
                 const dayDiv = document.createElement('div');
                 dayDiv.className = `day status-${status.toLowerCase()}`;
                 dayDiv.dataset.date = dateKey;
+
+                if (day === todayDate && currentMonth === todayMonth && currentYear === todayYear) {
+                    dayDiv.classList.add('today');
+                }
                 
                 let dayHTML = `<div class="day-content">
                         <span class="day-number">${day}</span>
@@ -603,5 +617,4 @@
     </script>
 </body>
 </html>
-
 
