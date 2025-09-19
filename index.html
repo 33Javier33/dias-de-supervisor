@@ -313,7 +313,7 @@
             <h3>Generar Informe de Supervisor</h3>
             <div class="report-controls">
                 <div class="control-group">
-                    <label>Informe del 15 de:</label>
+                    <label>Informe del 16 de:</label>
                     <select id="reportMonth"></select>
                     <input type="number" id="reportYear" min="2000" max="2100">
                 </div>
@@ -537,8 +537,10 @@
         function generateReport() {
             const reportMonth = parseInt(reportMonthSelect.value);
             const reportYear = parseInt(reportYearInput.value);
-            let startDate = new Date(reportYear, reportMonth, 15);
-            let endDate = new Date(reportYear, reportMonth + 1, 14);
+            // --- CAMBIO: La fecha de inicio es el 16 del mes seleccionado ---
+            let startDate = new Date(reportYear, reportMonth, 16);
+            // --- CAMBIO: La fecha de fin es el 15 del mes siguiente ---
+            let endDate = new Date(reportYear, reportMonth + 1, 15);
             let supervisorDays = [];
             for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
                 const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -620,5 +622,3 @@
     </script>
 </body>
 </html>
-
-
