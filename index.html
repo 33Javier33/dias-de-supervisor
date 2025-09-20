@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Calendario de Trabajo</title>
+    <title>Días de Supervisión</title>
 
-    <!-- PWA Meta Tags - RUTAS CORREGIDAS PARA VERCEL -->
-    <link rel="manifest" href="/manifest.json">
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#ffffff">
-    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
 
     <style>
         /* --- Tema Claro (Predeterminado) y Variables Globales --- */
@@ -276,13 +276,13 @@
 
     <header class="app-header">
         <button id="menu-toggle" aria-label="Abrir menú"><div class="hamburger-icon"><span></span><span></span><span></span></div></button>
-        <h1 class="app-title">Calendario</h1>
+        <h1 class="app-title">Días de Supervisión</h1>
         <button id="themeToggle">🌙</button>
     </header>
     <div class="side-nav" id="side-nav">
         <nav>
             <ul>
-                <li><a href="#" class="nav-link" data-section="calendar-section">📅 Calendario</a></li>
+                <li><a href="#" class="nav-link" data-section="calendar-section">📅 Días de Supervisión</a></li>
                 <li><a href="#" class="nav-link" data-section="data-management-section">💾 Gestión de Datos</a></li>
                 <li><a href="#" class="nav-link" data-section="report-section">📄 Generar Informe</a></li>
             </ul>
@@ -357,8 +357,7 @@
         // --- Registro del Service Worker ---
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                // RUTA CORREGIDA PARA VERCEL
-                navigator.serviceWorker.register('/sw.js').catch(e => console.error('Fallo en registro de SW:', e));
+                navigator.serviceWorker.register('sw.js').catch(e => console.error('Fallo en registro de SW:', e));
             });
         }
         
@@ -417,7 +416,6 @@
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
             const firstDay = (new Date(currentYear, currentMonth, 1).getDay() + 6) % 7;
 
-            // Obtener la fecha de hoy para compararla
             const today = new Date();
             const todayDate = today.getDate();
             const todayMonth = today.getMonth();
@@ -437,7 +435,6 @@
                 dayDiv.className = `day status-${status.toLowerCase()}`;
                 dayDiv.dataset.date = dateKey;
                 
-                // Aplicar la clase 'today' si el día coincide con la fecha actual
                 if (day === todayDate && currentMonth === todayMonth && currentYear === todayYear) {
                     dayDiv.classList.add('today');
                 }
@@ -495,7 +492,7 @@
             const url = URL.createObjectURL(dataBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `calendario-backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.download = `supervisor-backup-${new Date().toISOString().split('T')[0]}.json`;
             link.click();
             URL.revokeObjectURL(url);
             showToast('Datos exportados.');
@@ -537,9 +534,7 @@
         function generateReport() {
             const reportMonth = parseInt(reportMonthSelect.value);
             const reportYear = parseInt(reportYearInput.value);
-            // --- CAMBIO: La fecha de inicio es el 16 del mes seleccionado ---
             let startDate = new Date(reportYear, reportMonth, 16);
-            // --- CAMBIO: La fecha de fin es el 15 del mes siguiente ---
             let endDate = new Date(reportYear, reportMonth + 1, 15);
             let supervisorDays = [];
             for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
@@ -569,11 +564,11 @@
             if (targetSection) {
                 targetSection.classList.add('active');
                 const titleMap = {
-                    'calendar-section': 'Calendario',
+                    'calendar-section': 'Días de Supervisión',
                     'data-management-section': 'Gestión de Datos',
                     'report-section': 'Informe'
                 };
-                appTitle.textContent = titleMap[targetId] || 'Calendario';
+                appTitle.textContent = titleMap[targetId] || 'Días de Supervisión';
             }
             if (sideNav.classList.contains('open')) {
                 toggleMenu();
@@ -622,4 +617,3 @@
     </script>
 </body>
 </html>
-
