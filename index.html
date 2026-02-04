@@ -3,617 +3,378 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Días de Supervisión</title>
-
-    <!-- PWA Meta Tags -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ffffff">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    <title>Supervisión Pro</title>
 
     <style>
-        /* --- Tema Claro (Predeterminado) y Variables Globales --- */
+        /* --- Variables de Diseño --- */
         :root {
-            --bg-color: #f0f2f5;
+            --primary: #4f46e5;
+            --primary-light: #e0e7ff;
+            --bg-color: #f8fafc;
             --container-bg: #ffffff;
-            --text-color: #333;
-            --text-color-secondary: #555;
-            --text-color-muted: #6a7c8d;
-            --border-color: #e0e6ed;
-            --shadow-color: rgba(0, 0, 0, 0.08);
-            --header-text-color: #2c3e50;
-            --button-bg: #007bff;
-            --button-hover-bg: #0056b3;
-            --button-text-color: #ffffff;
-            --report-btn-bg: #28a745;
-            --report-btn-hover-bg: #218838;
-            --data-btn-bg: #6c757d;
-            --data-btn-hover-bg: #5a6268;
-            --day-default-bg: #fdfefe;
-            --day-default-border: #e9edf2;
-            --status-supervisor-bg: #e0f2f7;
-            --status-supervisor-border: #b3e0ed;
-            --status-supervisor-text: #005f73;
-            --status-crupier-bg: #e6ffe6;
-            --status-crupier-border: #b3f0b3;
-            --status-crupier-text: #2d6b3d;
-            --input-bg: #f8f9fa;
-            --input-border: #ced4da;
-            --report-output-bg: #e9ecef;
-            --menu-bg: #ffffff;
-            --menu-text: #2c3e50;
-            --menu-hover-bg: #f0f2f5;
-            --modal-overlay-bg: rgba(0, 0, 0, 0.6);
-            --note-indicator-color: #ff4757;
+            --text-main: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --tab-bg: rgba(255, 255, 255, 0.85);
+            
+            --status-libre-bg: #f1f5f9;
+            --status-supervisor-bg: #dcfce7;
+            --status-supervisor-text: #15803d;
+            --status-crupier-bg: #e0f2fe;
+            --status-crupier-text: #0369a1;
+            
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --shadow-up: 0 -4px 12px rgba(0,0,0,0.05);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* --- Tema Oscuro --- */
         body.dark-mode {
-            --bg-color: #121212;
-            --container-bg: #1e1e1e;
-            --text-color: #e0e0e0;
-            --text-color-secondary: #b0b0b0;
-            --text-color-muted: #888888;
-            --border-color: #3a3a3a;
-            --shadow-color: rgba(0, 0, 0, 0.4);
-            --header-text-color: #ffffff;
-            --day-default-bg: #2c2c2c;
-            --day-default-border: #3a3a3a;
-            --status-supervisor-bg: #003f5c;
-            --status-supervisor-border: #005f73;
-            --status-supervisor-text: #a7d8e8;
-            --status-crupier-bg: #1e4620;
-            --status-crupier-border: #2d6b3d;
-            --status-crupier-text: #b3f0b3;
-            --input-bg: #333333;
-            --input-border: #555555;
-            --report-output-bg: #252525;
-            --menu-bg: #1e1e1e;
-            --menu-text: #e0e0e0;
-            --menu-hover-bg: #333333;
-            --note-indicator-color: #ff6b81;
+            --bg-color: #0f172a;
+            --container-bg: #1e293b;
+            --text-main: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --tab-bg: rgba(30, 41, 59, 0.9);
+            --status-libre-bg: #334155;
+            --status-supervisor-bg: #064e3b;
+            --status-supervisor-text: #6ee7b7;
+            --status-crupier-bg: #0c4a6e;
+            --status-crupier-text: #7dd3fc;
         }
-        
-        body.dark-mode { --theme-color-meta: #121212; }
 
-        /* --- Estilos Generales Optimizados para Móvil --- */
-        html { -webkit-text-size-adjust: 100%; }
+        /* --- Reset y General --- */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color); color: var(--text-color); margin: 0;
-            padding-top: 60px; transition: background-color 0.3s, color 0.3s;
-            overflow-x: hidden;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding-top: 80px;
+            padding-bottom: 90px; /* Espacio para la barra inferior */
+            transition: background-color 0.3s;
         }
-        main { padding: 15px; box-sizing: border-box; }
 
-        /* --- Header y Menú Hamburguesa --- */
+        /* --- Header Superior --- */
         .app-header {
-            position: fixed; top: 0; left: 0; width: 100%; height: 60px;
-            background-color: var(--container-bg); box-shadow: 0 2px 10px var(--shadow-color);
-            display: flex; align-items: center; padding: 0 15px;
-            z-index: 1000; box-sizing: border-box;
+            position: fixed; top: 0; left: 0; width: 100%; height: 70px;
+            background: transparent;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 25px; z-index: 1000;
         }
-        #menu-toggle { background: none; border: none; cursor: pointer; padding: 10px; z-index: 1002; }
-        .hamburger-icon { width: 24px; height: 20px; position: relative; }
-        .hamburger-icon span {
-            display: block; position: absolute; height: 3px; width: 100%;
-            background: var(--text-color); border-radius: 3px; left: 0;
-            transition: all 0.3s ease-in-out;
-        }
-        .hamburger-icon span:nth-child(1) { top: 0px; }
-        .hamburger-icon span:nth-child(2) { top: 8px; }
-        .hamburger-icon span:nth-child(3) { top: 16px; }
-        .app-header.menu-open .hamburger-icon span:nth-child(1) { top: 8px; transform: rotate(135deg); }
-        .app-header.menu-open .hamburger-icon span:nth-child(2) { opacity: 0; left: -24px; }
-        .app-header.menu-open .hamburger-icon span:nth-child(3) { top: 8px; transform: rotate(-135deg); }
-        .app-title {
-            margin: 0; font-size: 1.25em; color: var(--header-text-color);
-            text-align: center; flex-grow: 1; font-weight: 600;
-        }
-        #themeToggle {
-            background-color: transparent; font-size: 1.3em; padding: 5px 10px;
-            border: none; cursor: pointer; color: var(--text-color);
-        }
+        .app-title { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.03em; }
 
-        /* --- Panel de Navegación Lateral y Overlay --- */
-        .side-nav {
-            position: fixed; top: 0; left: 0; width: 250px; height: 100%;
-            background-color: var(--menu-bg); box-shadow: 2px 0 15px rgba(0,0,0,0.2);
-            transform: translateX(-100%); transition: transform 0.3s ease-in-out;
-            z-index: 1001; padding-top: 80px;
+        /* --- Barra de Navegación Inferior (Tab Bar) --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 75px;
+            background: var(--tab-bg);
+            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            border-top: 1px solid var(--border-color);
+            display: flex; justify-content: space-around; align-items: center;
+            z-index: 1000; padding-bottom: env(safe-area-inset-bottom);
+            box-shadow: var(--shadow-up);
         }
-        .side-nav.open { transform: translateX(0); }
-        .side-nav nav ul { list-style: none; padding: 0; margin: 0; }
-        .side-nav nav a {
-            display: block; padding: 15px 20px; color: var(--menu-text);
-            text-decoration: none; font-size: 1.1em; transition: background-color 0.2s;
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            text-decoration: none; color: var(--text-secondary);
+            font-size: 0.65rem; font-weight: 600; transition: var(--transition);
+            flex: 1; padding: 10px 0;
         }
-        #menu-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: var(--modal-overlay-bg); opacity: 0; visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s; z-index: 998;
-        }
-        #menu-overlay.show { opacity: 1; visibility: visible; }
-        
+        .nav-item svg, .nav-item .icon { font-size: 1.4rem; margin-bottom: 4px; transition: var(--transition); }
+        .nav-item.active { color: var(--primary); }
+        .nav-item.active .icon { transform: translateY(-5px); filter: drop-shadow(0 4px 6px rgba(79, 70, 229, 0.3)); }
+
         /* --- Contenedores de Sección --- */
-        .section-container {
-            background-color: var(--container-bg); border-radius: 12px;
-            box-shadow: 0 4px 20px var(--shadow-color); padding: 15px;
-            width: 100%; box-sizing: border-box; margin-bottom: 20px; display: none;
-        }
+        main { max-width: 500px; margin: 0 auto; padding: 0 20px; }
+        .section-container { display: none; animation: slideUp 0.4s ease-out; }
         .section-container.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Calendario --- */
-        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .calendar-header h2 { margin: 0; font-size: 1.6em; color: var(--header-text-color); text-align: center; flex-grow: 1; }
-        .calendar-header button {
-            background-color: var(--button-bg); color: var(--button-text-color); border: none;
-            padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold;
+        /* --- Calendario Pro --- */
+        .calendar-card {
+            background: var(--container-bg); border-radius: var(--radius-lg);
+            padding: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
         }
-        .weekdays {
-            display: grid; grid-template-columns: repeat(7, 1fr); font-weight: bold;
-            color: var(--text-color-muted); text-align: center; padding-bottom: 10px;
-            border-bottom: 1px solid var(--border-color); margin-bottom: 10px; font-size: 0.9em;
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .calendar-header h2 { font-size: 1.1rem; font-weight: 700; margin: 0; }
+        .nav-btn {
+            background: var(--status-libre-bg); border: none; width: 36px; height: 36px;
+            border-radius: 12px; color: var(--text-main); cursor: pointer;
         }
-        .day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+
+        .weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 10px; }
+        .weekdays span { font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); text-align: center; }
+
+        .day-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
         .day {
-            border: 1px solid var(--day-default-border); border-radius: 8px;
-            padding-bottom: 100%; position: relative; cursor: pointer; transition: all 0.2s ease;
+            aspect-ratio: 1; border-radius: 12px; background: var(--status-libre-bg);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: relative; cursor: pointer; transition: var(--transition);
         }
-        .day:active { transform: scale(0.95); }
-        .day.empty { background-color: transparent; border-color: transparent; cursor: default; pointer-events: none; }
-        .day-content {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; justify-content: space-between;
-            align-items: center; padding: 6px 2px; box-sizing: border-box;
+        .day-number { font-size: 0.95rem; font-weight: 600; }
+        .day.status-supervisor { background: var(--status-supervisor-bg); color: var(--status-supervisor-text); }
+        .day.status-crupier { background: var(--status-crupier-bg); color: var(--status-crupier-text); }
+        .day.today { outline: 2px solid var(--primary); outline-offset: 2px; }
+        .note-dot { width: 4px; height: 4px; background: #f43f5e; border-radius: 50%; position: absolute; top: 6px; right: 6px; }
+
+        /* --- UI Elements --- */
+        .btn {
+            width: 100%; padding: 15px; border-radius: 15px; border: none;
+            font-size: 1rem; font-weight: 700; cursor: pointer; transition: var(--transition);
         }
-        .day .day-number { font-size: 1.1em; font-weight: 600; }
-        .day .status-text {
-            font-size: 0.75em; font-weight: 600; text-align: center;
-            width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .note-indicator {
-            position: absolute; top: 6px; right: 6px; width: 6px; height: 6px;
-            background-color: var(--note-indicator-color); border-radius: 50%;
+        .btn-primary { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
+        .btn-secondary { background: var(--status-libre-bg); color: var(--text-main); margin-top: 10px; }
+
+        .card {
+            background: var(--container-bg); border-radius: var(--radius-lg);
+            padding: 20px; border: 1px solid var(--border-color); margin-bottom: 20px;
         }
 
-        /* Colores de estado */
-        .status-libre { background-color: var(--day-default-bg); color: var(--text-color); }
-        .status-supervisor { background-color: var(--status-supervisor-bg); color: var(--status-supervisor-text); }
-        .status-crupier { background-color: var(--status-crupier-bg); color: var(--status-crupier-text); }
-
-        /* Estilo para el día actual */
-        .day.today {
-            border: 2px solid var(--button-bg);
-            box-shadow: 0 0 8px var(--button-bg);
-        }
-
-        /* --- Secciones de Gestión y Reporte --- */
-        .data-management-container h3, .report-section h3 {
-            margin-top: 0; color: var(--header-text-color); font-size: 1.2em;
-            margin-bottom: 20px; text-align: center;
-        }
-        .data-buttons { display: flex; justify-content: center; gap: 15px; }
-        .data-buttons button, .report-section button {
-            color: var(--button-text-color); border: none; padding: 12px 20px;
-            border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: bold;
-        }
-        .data-buttons button { background-color: var(--data-btn-bg); }
-        .report-section button { background-color: var(--report-btn-bg); margin-top: 15px; }
-        .report-controls { display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 15px; }
-        .report-controls .control-group { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 5px; width: 100%; }
-        .report-controls label { font-size: 0.95em; color: var(--text-color-secondary); white-space: nowrap; }
-        .report-controls select, .report-controls input[type="number"] {
-            padding: 8px; border: 1px solid var(--input-border); border-radius: 5px; font-size: 1em;
-            background-color: var(--input-bg); color: var(--text-color); width: 100%; box-sizing: border-box;
-        }
-        .report-controls input[type="number"] { width: 100px; text-align: center; }
-        .report-output {
-            background-color: var(--report-output-bg); border: 1px solid var(--input-border);
-            border-radius: 8px; padding: 15px; text-align: left; white-space: pre-wrap; word-wrap: break-word;
-            font-family: monospace; font-size: 0.9em; min-height: 50px; max-height: 200px;
-            overflow-y: auto; margin-top: 15px; color: var(--text-color);
-        }
-
-        /* --- Estilos del Modal de Notas --- */
+        /* --- Modal --- */
         #day-editor-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; justify-content: center; align-items: center;
-            background-color: var(--modal-overlay-bg);
-            opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s;
-            z-index: 1002;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
+            display: none; align-items: flex-end; justify-content: center; z-index: 2000;
         }
-        #day-editor-modal.show { opacity: 1; visibility: visible; }
+        #day-editor-modal.show { display: flex; }
         .modal-content {
-            background-color: var(--container-bg); border-radius: 12px;
-            padding: 20px; width: calc(100% - 40px); max-width: 400px;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.2);
-            transform: scale(0.9); transition: transform 0.3s;
+            background: var(--container-bg); width: 100%; max-width: 500px;
+            padding: 30px; border-radius: 30px 30px 0 0; animation: slideIn 0.3s ease-out;
         }
-        #day-editor-modal.show .modal-content { transform: scale(1); }
-        .modal-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;
+        @keyframes slideIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        /* --- Toast --- */
+        #toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: #1e293b; color: white; padding: 10px 20px; border-radius: 50px;
+            font-size: 0.85rem; opacity: 0; transition: 0.3s; z-index: 3000;
         }
-        .modal-header h4 { margin: 0; font-size: 1.2em; color: var(--header-text-color); }
-        .modal-body .form-group { margin-bottom: 15px; }
-        .modal-body label { display: block; font-size: 0.9em; margin-bottom: 5px; color: var(--text-color-secondary); }
-        .modal-body select, .modal-body textarea {
-            width: 100%; padding: 10px; font-size: 1em;
-            border: 1px solid var(--input-border); border-radius: 8px;
-            background-color: var(--input-bg); color: var(--text-color);
-            box-sizing: border-box;
-        }
-        .modal-body textarea { resize: vertical; min-height: 80px; }
-        .modal-footer {
-            display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;
-        }
-        .modal-footer button {
-            padding: 10px 20px; border-radius: 8px; font-size: 1em;
-            font-weight: bold; cursor: pointer; border: none;
-        }
-        #save-day-btn { background-color: var(--button-bg); color: var(--button-text-color); }
-        #cancel-day-btn { background-color: var(--data-btn-bg); color: var(--button-text-color); }
-        
-        /* --- Notificaciones y Footer --- */
-        #toast-container {
-            position: fixed; top: 70px; z-index: 1003;
-            width: calc(100% - 20px); left: 10px; display: flex;
-            flex-direction: column; align-items: center; gap: 10px;
-        }
-        .toast {
-            background-color: #2c3e50; color: white; padding: 12px 20px;
-            border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            font-size: 0.95em; opacity: 0; transform: translateY(-20px);
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-        .toast.show { opacity: 1; transform: translateY(0); }
-        footer { text-align: center; padding: 20px; color: var(--text-color-muted); font-size: 0.9em; }
+        #toast.show { opacity: 1; top: 30px; }
     </style>
 </head>
 <body>
-    <div id="toast-container"></div>
-    <div id="menu-overlay"></div>
+
+    <div id="toast">Copiado</div>
 
     <header class="app-header">
-        <button id="menu-toggle" aria-label="Abrir menú"><div class="hamburger-icon"><span></span><span></span><span></span></div></button>
-        <h1 class="app-title">Días de Supervisión</h1>
-        <button id="themeToggle">🌙</button>
+        <div class="app-title">Supervisión</div>
+        <button id="themeToggle" style="background:none; border:none; font-size: 1.5rem;">🌙</button>
     </header>
-    <div class="side-nav" id="side-nav">
-        <nav>
-            <ul>
-                <li><a href="#" class="nav-link" data-section="calendar-section">📅 Días de Supervisión</a></li>
-                <li><a href="#" class="nav-link" data-section="data-management-section">💾 Gestión de Datos</a></li>
-                <li><a href="#" class="nav-link" data-section="report-section">📄 Generar Informe</a></li>
-            </ul>
-        </nav>
-    </div>
 
     <main>
+        <!-- SECCIÓN CALENDARIO -->
         <div id="calendar-section" class="section-container active">
-            <div class="calendar-header">
-                <button id="prevMonth">&lt;</button>
-                <h2 id="monthYear"></h2>
-                <button id="nextMonth">&gt;</button>
-            </div>
-            <div class="weekdays">
-                <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
-            </div>
-            <div id="calendarGrid" class="day-grid"></div>
-        </div>
-        <div id="data-management-section" class="section-container">
-            <h3>Gestión de Datos</h3>
-            <div class="data-buttons">
-                <button id="importDataBtn">Importar</button>
-                <button id="exportDataBtn">Exportar</button>
-            </div>
-            <input type="file" id="fileInput" accept=".json" style="display: none;">
-        </div>
-        <div id="report-section" class="section-container">
-            <h3>Generar Informe de Supervisor</h3>
-            <div class="report-controls">
-                <div class="control-group">
-                    <label>Informe del 16 de:</label>
-                    <select id="reportMonth"></select>
-                    <input type="number" id="reportYear" min="2000" max="2100">
+            <div class="calendar-card">
+                <div class="calendar-header">
+                    <button class="nav-btn" id="prevMonth">←</button>
+                    <h2 id="monthYear">Febrero 2026</h2>
+                    <button class="nav-btn" id="nextMonth">→</button>
                 </div>
+                <div class="weekdays">
+                    <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
+                </div>
+                <div id="calendarGrid" class="day-grid"></div>
             </div>
-            <button id="generateReportBtn">Generar y Copiar</button>
-            <div class="report-output" id="reportOutput">
-                Selecciona mes/año y genera el informe. Se copiará automáticamente.
+        </div>
+
+        <!-- SECCIÓN INFORME -->
+        <div id="report-section" class="section-container">
+            <div class="card">
+                <h3 style="margin:0 0 15px 0">Generar Informe</h3>
+                <div style="display: grid; gap: 10px; margin-bottom: 20px;">
+                    <select id="reportMonth" style="padding:12px; border-radius:10px; border:1px solid var(--border-color);"></select>
+                    <input type="number" id="reportYear" style="padding:12px; border-radius:10px; border:1px solid var(--border-color);">
+                </div>
+                <button id="generateReportBtn" class="btn btn-primary">Generar y Copiar</button>
+                <pre id="reportOutput" style="background:var(--bg-color); padding:15px; border-radius:10px; font-size:0.8rem; margin-top:15px; overflow-x:auto;"></pre>
             </div>
+        </div>
+
+        <!-- SECCIÓN CONFIGURACIÓN / DATOS -->
+        <div id="config-section" class="section-container">
+            <div class="card">
+                <h3>Copia de Seguridad</h3>
+                <button id="exportDataBtn" class="btn btn-secondary">Exportar Datos (.json)</button>
+                <button id="importDataBtn" class="btn btn-secondary">Importar Datos (.json)</button>
+                <input type="file" id="fileInput" style="display:none" accept=".json">
+            </div>
+        </div>
+
+        <!-- MARCA EN TODAS LAS PANTALLAS (MOVIDO AQUÍ) -->
+        <div style="text-align: center; color: var(--text-secondary); font-size: 0.7rem; margin-top: 20px;">
+            CarlosPN Interactive® 2026
         </div>
     </main>
 
+    <!-- NAVEGACIÓN INFERIOR -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active" data-section="calendar-section">
+            <span class="icon">📅</span>
+            <span>Calendario</span>
+        </a>
+        <a href="#" class="nav-item" data-section="report-section">
+            <span class="icon">📄</span>
+            <span>Informe</span>
+        </a>
+        <a href="#" class="nav-item" data-section="config-section">
+            <span class="icon">⚙️</span>
+            <span>Datos</span>
+        </a>
+    </nav>
+
+    <!-- MODAL EDITOR -->
     <div id="day-editor-modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h4 id="modal-date"></h4>
+            <h2 id="modal-date" style="margin-top:0">16 de Febrero</h2>
+            <div style="margin-bottom:20px;">
+                <label style="font-size:0.8rem; font-weight:700; color:var(--text-secondary)">ESTADO DEL TURNO</label>
+                <select id="status-select" style="width:100%; padding:15px; margin-top:8px; border-radius:12px; border:1px solid var(--border-color); font-size:1rem;">
+                    <option value="Libre">Libre / Descanso</option>
+                    <option value="Supervisor">Supervisor</option>
+                    <option value="Crupier">Crupier</option>
+                </select>
             </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label for="status-select">Estado del Día</label>
-                    <select id="status-select">
-                        <option value="Libre">Libre</option>
-                        <option value="Supervisor">Supervisor</option>
-                        <option value="Crupier">Crupier</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="note-input">Notas Adicionales</label>
-                    <textarea id="note-input" placeholder="Añade una nota..."></textarea>
-                </div>
+            <div style="margin-bottom:25px;">
+                <label style="font-size:0.8rem; font-weight:700; color:var(--text-secondary)">NOTAS</label>
+                <textarea id="note-input" style="width:100%; padding:15px; margin-top:8px; border-radius:12px; border:1px solid var(--border-color); font-size:1rem;" rows="3" placeholder="Añadir nota..."></textarea>
             </div>
-            <div class="modal-footer">
-                <button id="cancel-day-btn">Cancelar</button>
-                <button id="save-day-btn">Guardar</button>
-            </div>
+            <button id="save-day-btn" class="btn btn-primary">Guardar Cambios</button>
+            <button id="cancel-day-btn" class="btn btn-secondary">Cerrar</button>
         </div>
     </div>
-    
-    <footer>CarlosPN Interactive®</footer>
 
     <script>
-        // --- Registro del Service Worker ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(e => console.error('Fallo en registro de SW:', e));
-            });
-        }
-        
-        // --- Elementos del DOM ---
-        const calendarGrid = document.getElementById('calendarGrid');
-        const monthYearLabel = document.getElementById('monthYear');
-        const prevMonthBtn = document.getElementById('prevMonth');
-        const nextMonthBtn = document.getElementById('nextMonth');
-        const themeToggleBtn = document.getElementById('themeToggle');
-        const generateReportBtn = document.getElementById('generateReportBtn');
-        const reportOutput = document.getElementById('reportOutput');
-        const reportMonthSelect = document.getElementById('reportMonth');
-        const reportYearInput = document.getElementById('reportYear');
-        const importDataBtn = document.getElementById('importDataBtn');
-        const exportDataBtn = document.getElementById('exportDataBtn');
-        const fileInput = document.getElementById('fileInput');
-        const menuToggle = document.getElementById('menu-toggle');
-        const sideNav = document.getElementById('side-nav');
-        const menuOverlay = document.getElementById('menu-overlay');
-        const appHeader = document.querySelector('.app-header');
-        const navLinks = document.querySelectorAll('.nav-link');
-        const sections = document.querySelectorAll('.section-container');
-        const appTitle = document.querySelector('.app-title');
-        
-        const dayEditorModal = document.getElementById('day-editor-modal');
-        const modalDate = document.getElementById('modal-date');
-        const statusSelect = document.getElementById('status-select');
-        const noteInput = document.getElementById('note-input');
-        const saveDayBtn = document.getElementById('save-day-btn');
-        const cancelDayBtn = document.getElementById('cancel-day-btn');
-
-        // --- Estado de la aplicación ---
+        // --- ESTADO Y LÓGICA ---
+        let workDays = JSON.parse(localStorage.getItem('workDays')) || {};
         let currentDate = new Date();
         let currentMonth = currentDate.getMonth();
         let currentYear = currentDate.getFullYear();
-        let currentlyEditingDate = null;
-        let workDays = JSON.parse(localStorage.getItem('workDays')) || {};
-        const monthNames = [ "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre" ];
+        let editingKey = null;
+        const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
-        // --- FUNCIONES ---
-
-        function showToast(message, duration = 3000) {
-            const toast = document.createElement('div');
-            toast.className = 'toast show';
-            toast.textContent = message;
-            document.getElementById('toast-container').appendChild(toast);
-            setTimeout(() => {
-                toast.classList.remove('show');
-                toast.addEventListener('transitionend', () => toast.remove());
-            }, duration);
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2500);
         }
 
         function renderCalendar() {
-            calendarGrid.innerHTML = '';
-            monthYearLabel.textContent = `${monthNames[currentMonth]} ${currentYear}`;
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            document.getElementById('monthYear').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+            
             const firstDay = (new Date(currentYear, currentMonth, 1).getDay() + 6) % 7;
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-            const today = new Date();
-            const todayDate = today.getDate();
-            const todayMonth = today.getMonth();
-            const todayYear = today.getFullYear();
+            for(let i=0; i<firstDay; i++) grid.innerHTML += '<div style="background:none"></div>';
 
-            for (let i = 0; i < firstDay; i++) {
-                calendarGrid.insertAdjacentHTML('beforeend', '<div class="day empty"></div>');
-            }
-
-            for (let day = 1; day <= daysInMonth; day++) {
-                const dateKey = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                const dayData = workDays[dateKey] || {};
-                const status = dayData.status || 'Libre';
-                const note = dayData.note || '';
-
-                const dayDiv = document.createElement('div');
-                dayDiv.className = `day status-${status.toLowerCase()}`;
-                dayDiv.dataset.date = dateKey;
+            for(let d=1; d<=daysInMonth; d++) {
+                const key = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const data = workDays[key] || {};
+                const isToday = new Date().toISOString().split('T')[0] === key;
                 
-                if (day === todayDate && currentMonth === todayMonth && currentYear === todayYear) {
-                    dayDiv.classList.add('today');
-                }
-
-                let dayHTML = `<div class="day-content">
-                        <span class="day-number">${day}</span>
-                        <span class="status-text">${status === "Libre" ? "" : status}</span>
-                    </div>`;
-                
-                if (note.trim() !== '') {
-                    dayHTML += '<div class="note-indicator"></div>';
-                }
-
-                dayDiv.innerHTML = dayHTML;
-                dayDiv.addEventListener('click', () => openDayEditor(dateKey));
-                calendarGrid.appendChild(dayDiv);
+                const dayEl = document.createElement('div');
+                dayEl.className = `day status-${(data.status || 'libre').toLowerCase()} ${isToday ? 'today' : ''}`;
+                dayEl.innerHTML = `
+                    <span class="day-number">${d}</span>
+                    ${data.note ? '<div class="note-dot"></div>' : ''}
+                `;
+                dayEl.onclick = () => openEditor(key);
+                grid.appendChild(dayEl);
             }
         }
 
-        function openDayEditor(dateKey) {
-            currentlyEditingDate = dateKey;
-            const dayData = workDays[dateKey] || {};
-            const [year, month, day] = dateKey.split('-');
-            modalDate.textContent = `Editando: ${day}/${month}/${year}`;
-            statusSelect.value = dayData.status || 'Libre';
-            noteInput.value = dayData.note || '';
-            dayEditorModal.classList.add('show');
+        function openEditor(key) {
+            editingKey = key;
+            const data = workDays[key] || {};
+            const [y, m, d] = key.split('-');
+            document.getElementById('modal-date').textContent = `${d} de ${monthNames[m-1]}`;
+            document.getElementById('status-select').value = data.status || 'Libre';
+            document.getElementById('note-input').value = data.note || '';
+            document.getElementById('day-editor-modal').classList.add('show');
         }
 
-        function closeDayEditor() {
-            dayEditorModal.classList.remove('show');
-            currentlyEditingDate = null;
-        }
-        
-        function saveDayData() {
-            if (!currentlyEditingDate) return;
-            const newStatus = statusSelect.value;
-            const newNote = noteInput.value.trim();
-
-            if (newStatus === 'Libre' && newNote === '') {
-                delete workDays[currentlyEditingDate];
-            } else {
-                workDays[currentlyEditingDate] = { status: newStatus, note: newNote };
-            }
-
+        // --- MANEJADORES ---
+        document.getElementById('save-day-btn').onclick = () => {
+            const status = document.getElementById('status-select').value;
+            const note = document.getElementById('note-input').value.trim();
+            if(status === 'Libre' && !note) delete workDays[editingKey];
+            else workDays[editingKey] = { status, note };
             localStorage.setItem('workDays', JSON.stringify(workDays));
             renderCalendar();
-            closeDayEditor();
-            showToast('Día guardado con éxito.');
-        }
+            document.getElementById('day-editor-modal').classList.remove('show');
+            showToast('Guardado');
+        };
 
-        function exportData() {
-            const dataStr = JSON.stringify(workDays, null, 2);
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(dataBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `supervisor-backup-${new Date().toISOString().split('T')[0]}.json`;
-            link.click();
-            URL.revokeObjectURL(url);
-            showToast('Datos exportados.');
-        }
+        document.getElementById('prevMonth').onclick = () => { currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;} renderCalendar(); };
+        document.getElementById('nextMonth').onclick = () => { currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++;} renderCalendar(); };
+        document.getElementById('cancel-day-btn').onclick = () => document.getElementById('day-editor-modal').classList.remove('show');
 
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            if (file.type !== "application/json") {
-                showToast("Error: El archivo debe ser de tipo .json", 4000);
-                fileInput.value = ''; return;
-            }
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const importedData = JSON.parse(e.target.result);
-                    if (typeof importedData === 'object' && importedData !== null && !Array.isArray(importedData)) {
-                        workDays = importedData;
-                        localStorage.setItem('workDays', JSON.stringify(workDays));
-                        renderCalendar();
-                        showToast('Datos importados con éxito.');
-                    } else { throw new Error('El formato del JSON no es un objeto válido.'); }
-                } catch (error) {
-                    console.error('Error al importar:', error);
-                    showToast('Error: El archivo está dañado o no tiene el formato correcto.', 4000);
-                } finally { fileInput.value = ''; }
-            };
-            reader.readAsText(file);
-        }
-
-        function initializeReportControls() {
-            reportMonthSelect.innerHTML = monthNames.map((name, index) => `<option value="${index}">${name}</option>`).join('');
-            reportMonthSelect.value = localStorage.getItem('reportMonth') || currentMonth;
-            reportYearInput.value = localStorage.getItem('reportYear') || currentYear;
-            reportMonthSelect.addEventListener('change', () => localStorage.setItem('reportMonth', reportMonthSelect.value));
-            reportYearInput.addEventListener('change', () => localStorage.setItem('reportYear', reportYearInput.value));
-        }
-
-        function generateReport() {
-            const reportMonth = parseInt(reportMonthSelect.value);
-            const reportYear = parseInt(reportYearInput.value);
-            let startDate = new Date(reportYear, reportMonth, 16);
-            let endDate = new Date(reportYear, reportMonth + 1, 15);
-            let supervisorDays = [];
-            for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-                const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                if (workDays[dateKey] && workDays[dateKey].status === "Supervisor") {
-                    const formattedDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
-                    supervisorDays.push(formattedDate);
-                }
-            }
-            const startMonthName = monthNames[startDate.getMonth()];
-            let reportText = `Supervisor mes de ${startMonthName}\n`;
-            reportText += `Total días: ${supervisorDays.length}\n-------------------\n`;
-            reportText += supervisorDays.length > 0 ? supervisorDays.join('\n') : "Sin días de Supervisor.";
-            reportOutput.textContent = reportText;
-            navigator.clipboard.writeText(reportText).then(() => showToast('Informe copiado.'), () => showToast('Error al copiar.'));
-        }
-
-        function toggleMenu() {
-            sideNav.classList.toggle('open');
-            menuOverlay.classList.toggle('show');
-            appHeader.classList.toggle('menu-open');
-        }
-
-        function switchSection(targetId) {
-            sections.forEach(section => section.classList.remove('active'));
-            const targetSection = document.getElementById(targetId);
-            if (targetSection) {
-                targetSection.classList.add('active');
-                const titleMap = {
-                    'calendar-section': 'Días de Supervisión',
-                    'data-management-section': 'Gestión de Datos',
-                    'report-section': 'Informe'
-                };
-                appTitle.textContent = titleMap[targetId] || 'Días de Supervisión';
-            }
-            if (sideNav.classList.contains('open')) {
-                toggleMenu();
-            }
-        }
-
-        // --- MANEJADORES DE EVENTOS ---
-        prevMonthBtn.addEventListener('click', () => { currentMonth = (currentMonth === 0) ? 11 : currentMonth - 1; if (currentMonth === 11) currentYear--; renderCalendar(); });
-        nextMonthBtn.addEventListener('click', () => { currentMonth = (currentMonth === 11) ? 0 : currentMonth + 1; if (currentMonth === 0) currentYear++; renderCalendar(); });
-        saveDayBtn.addEventListener('click', saveDayData);
-        cancelDayBtn.addEventListener('click', closeDayEditor);
-        dayEditorModal.addEventListener('click', (e) => { if (e.target === dayEditorModal) closeDayEditor(); });
-        importDataBtn.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', importData);
-        exportDataBtn.addEventListener('click', exportData);
-        generateReportBtn.addEventListener('click', generateReport);
-        themeToggleBtn.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            const isDarkMode = document.body.classList.contains('dark-mode');
-            themeToggleBtn.textContent = isDarkMode ? '☀️' : '🌙';
-            localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-            document.querySelector('meta[name="theme-color"]').setAttribute('content', isDarkMode ? '#121212' : '#ffffff');
-        });
-        menuToggle.addEventListener('click', toggleMenu);
-        menuOverlay.addEventListener('click', toggleMenu);
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
+        // Navegación Tabs
+        document.querySelectorAll('.nav-item').forEach(btn => {
+            btn.onclick = (e) => {
                 e.preventDefault();
-                switchSection(e.currentTarget.getAttribute('data-section'));
-            });
+                const target = btn.dataset.section;
+                document.querySelectorAll('.section-container').forEach(s => s.classList.remove('active'));
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                document.getElementById(target).classList.add('active');
+                btn.classList.add('active');
+            };
         });
 
-        // --- INICIALIZACIÓN ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const savedTheme = localStorage.getItem('theme');
-            const isDarkMode = savedTheme === 'dark';
-            if (isDarkMode) {
-                document.body.classList.add('dark-mode');
-                themeToggleBtn.textContent = '☀️';
+        // Informe 16 al 15
+        document.getElementById('generateReportBtn').onclick = () => {
+            const m = parseInt(document.getElementById('reportMonth').value);
+            const y = parseInt(document.getElementById('reportYear').value);
+            let start = new Date(y, m, 16);
+            let end = new Date(y, m+1, 15);
+            let result = [];
+            for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)) {
+                const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                if(workDays[k]?.status === 'Supervisor') result.push(`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`);
             }
-            document.querySelector('meta[name="theme-color"]').setAttribute('content', isDarkMode ? '#121212' : '#ffffff');
+            const out = `Supervisor ${monthNames[m]}\nTotal: ${result.length}\n----------\n${result.join('\n')}`;
+            document.getElementById('reportOutput').textContent = out;
+            navigator.clipboard.writeText(out).then(() => showToast('Informe Copiado'));
+        };
+
+        // Dark Mode
+        document.getElementById('themeToggle').onclick = () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+        };
+
+        // Backup
+        document.getElementById('exportDataBtn').onclick = () => {
+            const blob = new Blob([JSON.stringify(workDays)], {type:'application/json'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download='backup_supervisor.json'; a.click();
+        };
+        document.getElementById('importDataBtn').onclick = () => document.getElementById('fileInput').click();
+        document.getElementById('fileInput').onchange = (e) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                workDays = JSON.parse(ev.target.result);
+                localStorage.setItem('workDays', JSON.stringify(workDays));
+                renderCalendar(); showToast('Datos Importados');
+            };
+            reader.readAsText(e.target.files[0]);
+        };
+
+        // Init
+        window.onload = () => {
+            if(localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('themeToggle').textContent = '☀️';
+            }
+            const mSelect = document.getElementById('reportMonth');
+            monthNames.forEach((name, i) => mSelect.innerHTML += `<option value="${i}">${name}</option>`);
+            mSelect.value = currentMonth;
+            document.getElementById('reportYear').value = currentYear;
             renderCalendar();
-            initializeReportControls();
-            switchSection('calendar-section'); 
-        });
+        };
     </script>
 </body>
 </html>
