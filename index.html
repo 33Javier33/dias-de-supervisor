@@ -5,8 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Supervisión Pro</title>
 
+    <!-- 1. ENLACE AL MANIFIESTO (Faltaba esto) -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Color de la barra de navegación en Android -->
+    <meta name="theme-color" content="#4f46e5">
+    
+    <!-- Icono para iOS (iPhone/iPad) -->
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+
     <style>
-        /* --- Variables de Diseño --- */
+        /* --- TUS ESTILOS ORIGINALES (Sin cambios) --- */
         :root {
             --primary: #4f46e5;
             --primary-light: #e0e7ff;
@@ -43,7 +52,6 @@
             --status-crupier-text: #7dd3fc;
         }
 
-        /* --- Reset y General --- */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: 'Inter', -apple-system, sans-serif;
@@ -51,11 +59,10 @@
             color: var(--text-main);
             margin: 0;
             padding-top: 80px;
-            padding-bottom: 90px; /* Espacio para la barra inferior */
+            padding-bottom: 90px;
             transition: background-color 0.3s;
         }
 
-        /* --- Header Superior --- */
         .app-header {
             position: fixed; top: 0; left: 0; width: 100%; height: 70px;
             background: transparent;
@@ -64,7 +71,6 @@
         }
         .app-title { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.03em; }
 
-        /* --- Barra de Navegación Inferior (Tab Bar) --- */
         .bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%; height: 75px;
             background: var(--tab-bg);
@@ -84,13 +90,11 @@
         .nav-item.active { color: var(--primary); }
         .nav-item.active .icon { transform: translateY(-5px); filter: drop-shadow(0 4px 6px rgba(79, 70, 229, 0.3)); }
 
-        /* --- Contenedores de Sección --- */
         main { max-width: 500px; margin: 0 auto; padding: 0 20px; }
         .section-container { display: none; animation: slideUp 0.4s ease-out; }
         .section-container.active { display: block; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Calendario Pro --- */
         .calendar-card {
             background: var(--container-bg); border-radius: var(--radius-lg);
             padding: 20px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
@@ -118,7 +122,6 @@
         .day.today { outline: 2px solid var(--primary); outline-offset: 2px; }
         .note-dot { width: 4px; height: 4px; background: #f43f5e; border-radius: 50%; position: absolute; top: 6px; right: 6px; }
 
-        /* --- UI Elements --- */
         .btn {
             width: 100%; padding: 15px; border-radius: 15px; border: none;
             font-size: 1rem; font-weight: 700; cursor: pointer; transition: var(--transition);
@@ -131,7 +134,6 @@
             padding: 20px; border: 1px solid var(--border-color); margin-bottom: 20px;
         }
 
-        /* --- Modal --- */
         #day-editor-modal {
             position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
             display: none; align-items: flex-end; justify-content: center; z-index: 2000;
@@ -143,7 +145,6 @@
         }
         @keyframes slideIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        /* --- Toast --- */
         #toast {
             position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
             background: #1e293b; color: white; padding: 10px 20px; border-radius: 50px;
@@ -162,7 +163,6 @@
     </header>
 
     <main>
-        <!-- SECCIÓN CALENDARIO -->
         <div id="calendar-section" class="section-container active">
             <div class="calendar-card">
                 <div class="calendar-header">
@@ -177,7 +177,6 @@
             </div>
         </div>
 
-        <!-- SECCIÓN INFORME -->
         <div id="report-section" class="section-container">
             <div class="card">
                 <h3 style="margin:0 0 15px 0">Generar Informe</h3>
@@ -190,7 +189,6 @@
             </div>
         </div>
 
-        <!-- SECCIÓN CONFIGURACIÓN / DATOS -->
         <div id="config-section" class="section-container">
             <div class="card">
                 <h3>Copia de Seguridad</h3>
@@ -200,13 +198,11 @@
             </div>
         </div>
 
-        <!-- MARCA EN TODAS LAS PANTALLAS (MOVIDO AQUÍ) -->
         <div style="text-align: center; color: var(--text-secondary); font-size: 0.7rem; margin-top: 20px;">
             CarlosPN Interactive® 2026
         </div>
     </main>
 
-    <!-- NAVEGACIÓN INFERIOR -->
     <nav class="bottom-nav">
         <a href="#" class="nav-item active" data-section="calendar-section">
             <span class="icon">📅</span>
@@ -222,7 +218,6 @@
         </a>
     </nav>
 
-    <!-- MODAL EDITOR -->
     <div id="day-editor-modal">
         <div class="modal-content">
             <h2 id="modal-date" style="margin-top:0">16 de Febrero</h2>
@@ -244,7 +239,20 @@
     </div>
 
     <script>
-        // --- ESTADO Y LÓGICA ---
+        // --- 2. REGISTRO DEL SERVICE WORKER (Faltaba esto) ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('SW registrado correctamente:', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('SW falló al registrarse:', err);
+                    });
+            });
+        }
+
+        // --- TU LÓGICA ORIGINAL ---
         let workDays = JSON.parse(localStorage.getItem('workDays')) || {};
         let currentDate = new Date();
         let currentMonth = currentDate.getMonth();
@@ -294,7 +302,6 @@
             document.getElementById('day-editor-modal').classList.add('show');
         }
 
-        // --- MANEJADORES ---
         document.getElementById('save-day-btn').onclick = () => {
             const status = document.getElementById('status-select').value;
             const note = document.getElementById('note-input').value.trim();
@@ -310,7 +317,6 @@
         document.getElementById('nextMonth').onclick = () => { currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++;} renderCalendar(); };
         document.getElementById('cancel-day-btn').onclick = () => document.getElementById('day-editor-modal').classList.remove('show');
 
-        // Navegación Tabs
         document.querySelectorAll('.nav-item').forEach(btn => {
             btn.onclick = (e) => {
                 e.preventDefault();
@@ -322,7 +328,6 @@
             };
         });
 
-        // Informe 16 al 15
         document.getElementById('generateReportBtn').onclick = () => {
             const m = parseInt(document.getElementById('reportMonth').value);
             const y = parseInt(document.getElementById('reportYear').value);
@@ -338,7 +343,6 @@
             navigator.clipboard.writeText(out).then(() => showToast('Informe Copiado'));
         };
 
-        // Dark Mode
         document.getElementById('themeToggle').onclick = () => {
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
@@ -346,7 +350,6 @@
             document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
         };
 
-        // Backup
         document.getElementById('exportDataBtn').onclick = () => {
             const blob = new Blob([JSON.stringify(workDays)], {type:'application/json'});
             const a = document.createElement('a');
@@ -363,7 +366,6 @@
             reader.readAsText(e.target.files[0]);
         };
 
-        // Init
         window.onload = () => {
             if(localStorage.getItem('theme') === 'dark') {
                 document.body.classList.add('dark-mode');
