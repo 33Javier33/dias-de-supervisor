@@ -8,42 +8,31 @@ PWA para marcar los días trabajados como **Supervisor** y generar el informe de
 - **Informe**: elige el mes y se copian los días de supervisor del 16 de ese mes al 15 del siguiente.
 - El indicador bajo el título muestra si todo está guardado en Supabase (verde), pendiente (amarillo) o con error (rojo).
 
-## Base de datos en Supabase (proyecto socios-comicion)
+## Base de datos (Supabase · socios-comicion)
 
-Los días se guardan en la tabla `public.supervisor_dias`. El teléfono guarda una copia para funcionar sin conexión y sube los cambios pendientes al volver la red. Cada usuario solo puede ver y modificar sus propios días (RLS).
+La app se conecta sola al proyecto **socios-comicion** (`teemahksasdougehrcly`) con la clave pública *anon*, igual que la app de socios. No hay que configurar nada en el teléfono.
 
-### 1. Crear la tabla
+- Tabla `public.dias_supervisor`: un registro por fecha (`estado` = `Supervisor` o `Libre`).
+- Tabla `public.dias_supervisor_historial`: cada alta y cambio queda registrado automáticamente.
+- La app puede leer, crear y modificar días, pero **no borrar**; el historial no es accesible desde la app.
+- Sin conexión, los cambios quedan en el teléfono y se suben solos al volver la red.
+- La primera vez que se abre, la app sube los días que ya había en el teléfono.
 
-Supabase → proyecto **socios-comicion** → **SQL Editor** → pega
-[`supabase/migrations/20261015000000_supervisor_dias.sql`](supabase/migrations/20261015000000_supervisor_dias.sql) → **Run**.
+### Instalación (una sola vez)
 
-No toca ninguna otra tabla del proyecto y se puede ejecutar más de una vez.
+Abre el SQL Editor del proyecto:
+https://supabase.com/dashboard/project/teemahksasdougehrcly/sql/new
 
-### 2. Usuario
+Pega [`supabase/migrations/20261015120000_dias_supervisor.sql`](supabase/migrations/20261015120000_dias_supervisor.sql) y pulsa **Run**.
 
-Usa tu usuario de socios-comicion si ya tienes uno con correo y contraseña. Si no:
-**Authentication → Users → Add user → Create new user** (marca *Auto Confirm User*).
-
-> Ojo: si socios-comicion tiene un trigger que crea un "socio" al registrar usuarios, crear uno nuevo también lo creará. Usar tu usuario existente lo evita.
-
-### 3. Datos del proyecto
-
-**Project Settings → API** (o *Data API*): copia la **Project URL** y la clave **anon public**.
-
-- Opción A (recomendada): ponlas en `index.html`, en `SUPABASE_URL` y `SUPABASE_ANON_KEY`. Así en cada teléfono solo pides correo y contraseña.
-- Opción B: escríbelas en la app, pestaña **Datos → Proyecto Supabase**.
-
-La clave *anon* es pública por diseño; la protección la dan el inicio de sesión y las políticas RLS. **Nunca** uses la clave `service_role` en la app.
-
-### 4. Conectar
-
-En la app, pestaña **Datos** → correo y contraseña → **Iniciar sesión y subir mis días**.
-Esto sube todos los días que ya tenías en el teléfono; no borra nada de Supabase. La contraseña no se guarda, solo la sesión.
-
-### Consultar los días desde Supabase
+### Consultas útiles
 
 ```sql
-select fecha, estado, nota from public.supervisor_dias
+-- Días de supervisor de un periodo
+select fecha, nota from public.dias_supervisor
 where estado = 'Supervisor' and fecha between '2026-09-16' and '2026-10-15'
 order by fecha;
+
+-- Historial de cambios
+select * from public.dias_supervisor_historial order by id desc;
 ```

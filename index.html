@@ -217,31 +217,9 @@
 
         <div id="config-section" class="section-container">
             <div class="card">
-                <h3 style="margin-top:0">Base de datos (Supabase)</h3>
-                <p class="help">Tus días se guardan en Supabase (proyecto socios-comicion) y en el teléfono como respaldo sin conexión. Inicia sesión con tu usuario de Supabase.</p>
-                <div id="sbLoggedOut">
-                    <details id="sbProjectBox">
-                        <summary class="field-label" style="cursor:pointer">PROYECTO SUPABASE</summary>
-                        <label class="field-label">URL DEL PROYECTO</label>
-                        <input type="url" id="sbUrl" class="field" placeholder="https://xxxx.supabase.co">
-                        <div style="height:12px"></div>
-                        <label class="field-label">CLAVE ANON (PUBLIC)</label>
-                        <input type="text" id="sbKey" class="field" placeholder="eyJhbGciOi...">
-                    </details>
-                    <div style="height:12px"></div>
-                    <label class="field-label">CORREO</label>
-                    <input type="email" id="sbEmail" class="field" autocomplete="username">
-                    <div style="height:12px"></div>
-                    <label class="field-label">CONTRASEÑA</label>
-                    <input type="password" id="sbPassword" class="field" autocomplete="current-password">
-                    <div style="height:15px"></div>
-                    <button id="loginBtn" class="btn btn-primary">Iniciar sesión y subir mis días</button>
-                </div>
-                <div id="sbLoggedIn" style="display:none">
-                    <p class="help">Conectado como <b id="sbUserEmail"></b></p>
-                    <button id="syncNowBtn" class="btn btn-secondary">Sincronizar ahora</button>
-                    <button id="logoutBtn" class="btn btn-danger">Cerrar sesión</button>
-                </div>
+                <h3 style="margin-top:0">Base de datos</h3>
+                <p class="help">Tus días se guardan automáticamente en Supabase (proyecto socios-comicion). El teléfono guarda una copia para funcionar sin conexión y sube los cambios en cuanto vuelve la red.</p>
+                <button id="syncNowBtn" class="btn btn-secondary">Sincronizar ahora</button>
             </div>
             <div class="card">
                 <h3 style="margin-top:0">Copia de Seguridad</h3>
@@ -302,19 +280,17 @@
         }
 
         // --- DATOS ---
-        // --- CONFIGURACIÓN SUPABASE (proyecto socios-comicion) ---
-        // Rellena estos dos valores (Supabase → Project Settings → API) para no tener que escribirlos en cada teléfono.
-        // La clave "anon" es pública: la seguridad la dan el inicio de sesión y las políticas RLS de la tabla.
-        const SUPABASE_URL = '';
-        const SUPABASE_ANON_KEY = '';
-        const SUPABASE_TABLE = 'supervisor_dias';
+        // --- SUPABASE (proyecto socios-comicion) ---
+        // Clave pública "anon" (la misma que usa la app socios-comicion). Las políticas RLS de la
+        // tabla dias_supervisor solo permiten leer, crear y modificar días (no borrar).
+        const SUPABASE_URL = 'https://teemahksasdougehrcly.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlZW1haGtzYXNkb3VnZWhyY2x5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyOTkwNjIsImV4cCI6MjA5Njg3NTA2Mn0.EIQ7gRcwf3zYgvGESKw3s5lnZMABN_EuNWsrJK3L1zk';
+        const SUPABASE_TABLE = 'dias_supervisor';
 
-        // localStorage es solo caché/offline. La fuente de verdad es Supabase (si hay sesión iniciada).
+        // localStorage es solo caché/offline. La fuente de verdad es Supabase.
         const LS_DAYS = 'workDays';
         const LS_PENDING = 'pendingOps';
-        const LS_SB_URL = 'sbUrl';
-        const LS_SB_KEY = 'sbKey';
-        const LS_SB_SESSION = 'sbSession';
+        const LS_INITIAL_UPLOAD = 'sbInitialUploadDone';
 
         function readJSON(key, fallback) {
             try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (e) { return fallback; }
@@ -359,82 +335,39 @@
         }
 
         // --- SINCRONIZACIÓN CON SUPABASE ---
-        function sbUrl() { return (localStorage.getItem(LS_SB_URL) || SUPABASE_URL).trim().replace(/\/+$/, ''); }
-        function sbKey() { return (localStorage.getItem(LS_SB_KEY) || SUPABASE_ANON_KEY).trim(); }
-        function sbSession() { return readJSON(LS_SB_SESSION, null); }
-        function isConnected() { return !!(sbUrl() && sbKey() && sbSession()); }
-
-        function saveSession(data) {
-            localStorage.setItem(LS_SB_SESSION, JSON.stringify({
-                access_token: data.access_token,
-                refresh_token: data.refresh_token,
-                expires_at: data.expires_at || Math.floor(Date.now() / 1000) + (data.expires_in || 3600),
-                user: { id: data.user.id, email: data.user.email }
-            }));
-        }
-
-        async function authRequest(grant, body) {
-            const res = await fetch(`${sbUrl()}/auth/v1/token?grant_type=${grant}`, {
-                method: 'POST',
-                headers: { apikey: sbKey(), 'Content-Type': 'application/json' },
-                body: JSON.stringify(body)
-            });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.error_description || data.msg || data.message || `HTTP ${res.status}`);
-            saveSession(data);
-        }
-
-        async function refreshSession() {
-            const session = sbSession();
-            if (!session) throw new Error('Sesión cerrada');
-            try {
-                await authRequest('refresh_token', { refresh_token: session.refresh_token });
-            } catch (err) {
-                if (navigator.onLine) { localStorage.removeItem(LS_SB_SESSION); renderAccount(); }
-                throw new Error('La sesión expiró, vuelve a iniciar sesión');
-            }
-        }
-
-        async function sbFetch(path, options = {}, retry = true) {
-            if ((sbSession()?.expires_at || 0) - 60 < Date.now() / 1000) await refreshSession();
-            const res = await fetch(`${sbUrl()}/rest/v1/${path}`, {
+        async function sbFetch(path, options = {}) {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
                 ...options,
                 headers: {
-                    apikey: sbKey(),
-                    Authorization: `Bearer ${sbSession().access_token}`,
+                    apikey: SUPABASE_ANON_KEY,
+                    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
                     'Content-Type': 'application/json',
                     ...(options.headers || {})
                 }
             });
-            if (res.status === 401 && retry) { await refreshSession(); return sbFetch(path, options, false); }
             if (!res.ok) {
                 const data = await res.json().catch(() => ({}));
                 throw new Error(data.message || `HTTP ${res.status}`);
             }
-            return res.status === 204 ? null : res.json();
+            return res.status === 204 || res.status === 201 ? null : res.json();
         }
 
         // Sube las operaciones pendientes y devuelve todos los días guardados en Supabase.
+        // Desmarcar un día se guarda como estado "Libre" (la tabla no permite borrar).
         async function remoteSync(ops) {
-            const userId = sbSession().user.id;
-            const upserts = ops.filter(o => o.type === 'upsert')
-                .map(o => ({ user_id: userId, fecha: o.date, estado: o.status, nota: o.note || '' }));
-            const deletes = ops.filter(o => o.type === 'delete').map(o => o.date);
-            if (upserts.length) {
-                await sbFetch(`${SUPABASE_TABLE}?on_conflict=user_id,fecha`, {
+            const rows = ops.map(o => o.type === 'delete'
+                ? { fecha: o.date, estado: 'Libre', nota: '' }
+                : { fecha: o.date, estado: o.status, nota: o.note || '' });
+            if (rows.length) {
+                await sbFetch(`${SUPABASE_TABLE}?on_conflict=fecha`, {
                     method: 'POST',
                     headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-                    body: JSON.stringify(upserts)
+                    body: JSON.stringify(rows)
                 });
             }
-            if (deletes.length) {
-                await sbFetch(`${SUPABASE_TABLE}?fecha=in.(${deletes.join(',')})`, {
-                    method: 'DELETE', headers: { Prefer: 'return=minimal' }
-                });
-            }
-            const rows = await sbFetch(`${SUPABASE_TABLE}?select=fecha,estado,nota&order=fecha`);
+            const data = await sbFetch(`${SUPABASE_TABLE}?select=fecha,estado,nota&order=fecha`);
             const days = {};
-            rows.forEach(r => { days[r.fecha] = { status: r.estado, note: r.nota || '' }; });
+            data.forEach(r => { days[r.fecha] = { status: r.estado, note: r.nota || '' }; });
             return days;
         }
 
@@ -443,8 +376,7 @@
             const text = document.getElementById('syncText');
             const pending = Object.keys(pendingOps).length;
             el.className = 'sync-status';
-            if (!isConnected()) { text.textContent = 'Solo local (sin Supabase)'; return; }
-            if (syncing) { el.classList.add('pending'); text.textContent = 'Sincronizando…'; return; }
+                        if (syncing) { el.classList.add('pending'); text.textContent = 'Sincronizando…'; return; }
             if (lastSyncError) { el.classList.add('error'); text.textContent = `Error: ${lastSyncError}${pending ? ` · ${pending} pendiente(s)` : ''}`; return; }
             if (pending) { el.classList.add('pending'); text.textContent = `${pending} pendiente(s) de subir`; return; }
             el.classList.add('ok'); text.textContent = 'Guardado en Supabase';
@@ -459,7 +391,7 @@
 
         // Sube lo pendiente y descarga todo lo guardado en Supabase.
         async function syncNow({ silent = true } = {}) {
-            if (!isConnected() || syncing) return;
+            if (syncing) return;
             if (!navigator.onLine) { lastSyncError = 'sin conexión'; updateSyncStatus(); return; }
             syncing = true; updateSyncStatus();
             try {
@@ -480,7 +412,7 @@
                 renderCalendar();
                 if (!silent) showToast('Sincronizado con Supabase');
             } catch (err) {
-                lastSyncError = err.message || 'sin conexión';
+                lastSyncError = err instanceof TypeError ? 'sin conexión' : (err.message || 'sin conexión');
                 if (!silent) showToast('No se pudo sincronizar');
             } finally {
                 syncing = false;
@@ -546,7 +478,7 @@
             if (isSupervisor) workDays[editingKey] = { status: 'Supervisor', note };
             else if (note) workDays[editingKey] = { status: 'Libre', note };
             else delete workDays[editingKey];
-            if (isConnected()) queueOp(editingKey);
+            queueOp(editingKey);
             persistLocal();
             renderCalendar();
             closeEditor();
@@ -612,64 +544,7 @@
             document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
         };
 
-        // --- CUENTA SUPABASE ---
-        function renderAccount() {
-            const session = sbSession();
-            document.getElementById('sbLoggedOut').style.display = session ? 'none' : 'block';
-            document.getElementById('sbLoggedIn').style.display = session ? 'block' : 'none';
-            document.getElementById('sbUserEmail').textContent = session?.user?.email || '';
-            document.getElementById('sbUrl').value = sbUrl();
-            document.getElementById('sbKey').value = sbKey();
-            // Si el proyecto ya viene configurado en el código, se oculta ese bloque.
-            document.getElementById('sbProjectBox').open = !(sbUrl() && sbKey());
-            updateSyncStatus();
-        }
-
-        document.getElementById('loginBtn').onclick = async () => {
-            const url = document.getElementById('sbUrl').value.trim().replace(/\/+$/, '');
-            const key = document.getElementById('sbKey').value.trim();
-            const email = document.getElementById('sbEmail').value.trim();
-            const password = document.getElementById('sbPassword').value;
-            if (!/^https:\/\/.+/.test(url) || !key) {
-                document.getElementById('sbProjectBox').open = true;
-                showToast('Falta la URL o la clave anon del proyecto');
-                return;
-            }
-            if (!email || !password) { showToast('Escribe correo y contraseña'); return; }
-            localStorage.setItem(LS_SB_URL, url);
-            localStorage.setItem(LS_SB_KEY, key);
-            const btn = document.getElementById('loginBtn');
-            btn.disabled = true;
-            try {
-                await authRequest('password', { email, password });
-            } catch (err) {
-                showToast(`No se pudo iniciar sesión: ${err.message}`);
-                return;
-            } finally {
-                btn.disabled = false;
-            }
-            document.getElementById('sbPassword').value = '';
-            // Subir todo lo que hay en el teléfono para no perder nada (no borra nada de Supabase).
-            Object.keys(workDays).forEach(queueOp);
-            lastSyncError = '';
-            persistLocal();
-            renderAccount();
-            await syncNow({ silent: false });
-        };
         document.getElementById('syncNowBtn').onclick = () => syncNow({ silent: false });
-        document.getElementById('logoutBtn').onclick = () => {
-            const pending = Object.keys(pendingOps).length;
-            const msg = pending
-                ? `Hay ${pending} cambio(s) sin subir que se perderán en Supabase. ¿Cerrar sesión igualmente?`
-                : '¿Cerrar sesión? Tus días siguen guardados en Supabase.';
-            if (!confirm(msg)) return;
-            localStorage.removeItem(LS_SB_SESSION);
-            pendingOps = {};
-            lastSyncError = '';
-            persistLocal();
-            renderAccount();
-            showToast('Sesión cerrada');
-        };
 
         // --- COPIA DE SEGURIDAD ---
         document.getElementById('exportDataBtn').onclick = () => {
@@ -691,7 +566,7 @@
                 catch (err) { showToast('Archivo no válido'); return; }
                 // Combinar en lugar de reemplazar, para no perder días.
                 Object.assign(workDays, imported);
-                if (isConnected()) Object.keys(imported).forEach(queueOp);
+                Object.keys(imported).forEach(queueOp);
                 persistLocal();
                 renderCalendar();
                 showToast(`Importados ${Object.keys(imported).length} días`);
@@ -717,9 +592,14 @@
             const periodStart = now.getDate() >= 16 ? now : new Date(now.getFullYear(), now.getMonth() - 1, 1);
             mSelect.value = periodStart.getMonth();
             document.getElementById('reportYear').value = periodStart.getFullYear();
+            // Primera vez: subir los días que ya había en el teléfono (no borra nada en Supabase).
+            if (!localStorage.getItem(LS_INITIAL_UPLOAD)) {
+                Object.keys(workDays).forEach(queueOp);
+                localStorage.setItem(LS_INITIAL_UPLOAD, '1');
+            }
             persistLocal();
             renderCalendar();
-            renderAccount();
+            updateSyncStatus();
             syncNow();
         })();
     </script>
