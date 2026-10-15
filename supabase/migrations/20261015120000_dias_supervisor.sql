@@ -1,6 +1,7 @@
 -- Días de Supervisor → proyecto Supabase socios-comicion (teemahksasdougehrcly).
 -- Pegar en: https://supabase.com/dashboard/project/teemahksasdougehrcly/sql/new  → Run.
 -- Se puede ejecutar más de una vez sin problema. No toca ninguna otra tabla.
+-- También repara la tabla si ya existía (creada a mano o con políticas que bloquean el guardado).
 
 -- 1) Tabla principal: un registro por fecha.
 create table if not exists public.dias_supervisor (
@@ -10,6 +11,14 @@ create table if not exists public.dias_supervisor (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+-- Reparación: columnas y clave única por fecha si la tabla ya existía con otra forma.
+alter table public.dias_supervisor add column if not exists fecha      date;
+alter table public.dias_supervisor add column if not exists estado     text        not null default 'Supervisor';
+alter table public.dias_supervisor add column if not exists nota       text        not null default '';
+alter table public.dias_supervisor add column if not exists created_at timestamptz not null default now();
+alter table public.dias_supervisor add column if not exists updated_at timestamptz not null default now();
+create unique index if not exists dias_supervisor_fecha_key on public.dias_supervisor (fecha);
 
 comment on table public.dias_supervisor is 'App Días de Supervisor: días marcados como Supervisor (Libre = desmarcado).';
 
@@ -67,15 +76,22 @@ create trigger dias_supervisor_log
 alter table public.dias_supervisor enable row level security;
 alter table public.dias_supervisor_historial enable row level security;
 
-drop policy if exists "dias_supervisor_select" on public.dias_supervisor;
+-- Quitar cualquier política anterior (también las creadas a mano) y crear las correctas.
+do $$
+declare p record;
+begin
+  for p in select policyname from pg_policies where schemaname = 'public' and tablename = 'dias_supervisor' loop
+    execute format('drop policy %I on public.dias_supervisor', p.policyname);
+  end loop;
+end;
+$$;
+
 create policy "dias_supervisor_select" on public.dias_supervisor
   for select to anon, authenticated using (true);
 
-drop policy if exists "dias_supervisor_insert" on public.dias_supervisor;
 create policy "dias_supervisor_insert" on public.dias_supervisor
   for insert to anon, authenticated with check (true);
 
-drop policy if exists "dias_supervisor_update" on public.dias_supervisor;
 create policy "dias_supervisor_update" on public.dias_supervisor
   for update to anon, authenticated using (true) with check (true);
 
@@ -84,3 +100,9 @@ grant select, insert, update on public.dias_supervisor to anon, authenticated;
 revoke all on public.dias_supervisor_historial from anon, authenticated;
 revoke all on function public.dias_supervisor_log() from public, anon, authenticated;
 revoke all on function public.dias_supervisor_touch() from public, anon, authenticated;
+grant usage on schema public to anon, authenticated;
+
+-- 4) Comprobación: deben salir 3 políticas (SELECT, INSERT, UPDATE) para {anon,authenticated}.
+select policyname, cmd, roles, permissive from pg_policies
+where schemaname = 'public' and tablename = 'dias_supervisor'
+order by cmd;
