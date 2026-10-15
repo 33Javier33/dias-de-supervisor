@@ -151,6 +151,28 @@
             font-size: 0.85rem; opacity: 0; transition: 0.3s; z-index: 3000;
         }
         #toast.show { opacity: 1; top: 30px; }
+
+        input, select, textarea {
+            background: var(--container-bg); color: var(--text-main);
+            border: 1px solid var(--border-color); font-family: inherit;
+        }
+        .field {
+            width: 100%; padding: 12px; margin-top: 8px; border-radius: 12px;
+            border: 1px solid var(--border-color); font-size: 1rem;
+        }
+        .field-label { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); }
+        .btn-supervisor { background: #16a34a; color: white; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3); }
+        .btn-danger { background: var(--status-libre-bg); color: #dc2626; margin-top: 10px; }
+        .modal-actions { display: grid; gap: 10px; }
+        .current-status { font-size: 0.85rem; color: var(--text-secondary); margin: -10px 0 20px; }
+
+        .sync-status { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+        .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #94a3b8; }
+        .sync-status.ok .sync-dot { background: #16a34a; }
+        .sync-status.pending .sync-dot { background: #f59e0b; }
+        .sync-status.error .sync-dot { background: #dc2626; }
+        .month-summary { text-align: center; margin-top: 15px; font-size: 0.85rem; color: var(--text-secondary); }
+        .help { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; }
     </style>
 </head>
 <body>
@@ -158,7 +180,10 @@
     <div id="toast">Copiado</div>
 
     <header class="app-header">
-        <div class="app-title">Supervisión</div>
+        <div>
+            <div class="app-title">Supervisión</div>
+            <div id="syncStatus" class="sync-status"><span class="sync-dot"></span><span id="syncText">Solo local</span></div>
+        </div>
         <button id="themeToggle" style="background:none; border:none; font-size: 1.5rem;">🌙</button>
     </header>
 
@@ -174,6 +199,7 @@
                     <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
                 </div>
                 <div id="calendarGrid" class="day-grid"></div>
+                <div id="monthSummary" class="month-summary"></div>
             </div>
         </div>
 
@@ -181,8 +207,8 @@
             <div class="card">
                 <h3 style="margin:0 0 15px 0">Generar Informe</h3>
                 <div style="display: grid; gap: 10px; margin-bottom: 20px;">
-                    <select id="reportMonth" style="padding:12px; border-radius:10px; border:1px solid var(--border-color);"></select>
-                    <input type="number" id="reportYear" style="padding:12px; border-radius:10px; border:1px solid var(--border-color);">
+                    <select id="reportMonth" class="field"></select>
+                    <input type="number" id="reportYear" class="field">
                 </div>
                 <button id="generateReportBtn" class="btn btn-primary">Generar y Copiar</button>
                 <pre id="reportOutput" style="background:var(--bg-color); padding:15px; border-radius:10px; font-size:0.8rem; margin-top:15px; overflow-x:auto;"></pre>
@@ -191,10 +217,23 @@
 
         <div id="config-section" class="section-container">
             <div class="card">
-                <h3>Copia de Seguridad</h3>
+                <h3 style="margin-top:0">Base de datos (Google Sheets)</h3>
+                <p class="help">Pega la URL de la aplicación web de Apps Script (termina en <b>/exec</b>). Los días se guardan en tu hoja de cálculo y en el teléfono como respaldo sin conexión.</p>
+                <label class="field-label">URL DEL SCRIPT</label>
+                <input type="url" id="sheetUrl" class="field" placeholder="https://script.google.com/macros/s/.../exec">
+                <div style="height:12px"></div>
+                <label class="field-label">CLAVE (OPCIONAL)</label>
+                <input type="text" id="sheetToken" class="field" placeholder="La misma que pusiste en TOKEN">
+                <div style="height:15px"></div>
+                <button id="saveSheetBtn" class="btn btn-primary">Conectar y subir mis días</button>
+                <button id="syncNowBtn" class="btn btn-secondary">Sincronizar ahora</button>
+                <button id="disconnectSheetBtn" class="btn btn-danger">Desconectar</button>
+            </div>
+            <div class="card">
+                <h3 style="margin-top:0">Copia de Seguridad</h3>
                 <button id="exportDataBtn" class="btn btn-secondary">Exportar Datos (.json)</button>
                 <button id="importDataBtn" class="btn btn-secondary">Importar Datos (.json)</button>
-                <input type="file" id="fileInput" style="display:none" accept=".json">
+                <input type="file" id="fileInput" style="display:none" accept=".json,application/json">
             </div>
         </div>
 
@@ -221,20 +260,16 @@
     <div id="day-editor-modal">
         <div class="modal-content">
             <h2 id="modal-date" style="margin-top:0">16 de Febrero</h2>
+            <div id="modal-current" class="current-status"></div>
             <div style="margin-bottom:20px;">
-                <label style="font-size:0.8rem; font-weight:700; color:var(--text-secondary)">ESTADO DEL TURNO</label>
-                <select id="status-select" style="width:100%; padding:15px; margin-top:8px; border-radius:12px; border:1px solid var(--border-color); font-size:1rem;">
-                    <option value="Libre">Libre / Descanso</option>
-                    <option value="Supervisor">Supervisor</option>
-                    <option value="Crupier">Crupier</option>
-                </select>
+                <label class="field-label">NOTA (OPCIONAL)</label>
+                <textarea id="note-input" class="field" rows="2" placeholder="Añadir nota..."></textarea>
             </div>
-            <div style="margin-bottom:25px;">
-                <label style="font-size:0.8rem; font-weight:700; color:var(--text-secondary)">NOTAS</label>
-                <textarea id="note-input" style="width:100%; padding:15px; margin-top:8px; border-radius:12px; border:1px solid var(--border-color); font-size:1rem;" rows="3" placeholder="Añadir nota..."></textarea>
+            <div class="modal-actions">
+                <button id="set-supervisor-btn" class="btn btn-supervisor">✅ Día de Supervisor</button>
+                <button id="unset-supervisor-btn" class="btn btn-danger" style="margin-top:0">✖ No fue de Supervisor</button>
+                <button id="cancel-day-btn" class="btn btn-secondary" style="margin-top:0">Cerrar</button>
             </div>
-            <button id="save-day-btn" class="btn btn-primary">Guardar Cambios</button>
-            <button id="cancel-day-btn" class="btn btn-secondary">Cerrar</button>
         </div>
     </div>
 
@@ -252,70 +287,200 @@
             });
         }
 
-        // --- TU LÓGICA ORIGINAL ---
-        let workDays = JSON.parse(localStorage.getItem('workDays')) || {};
+        // --- DATOS ---
+        // localStorage es solo caché/offline. La fuente de verdad es Google Sheets (si está conectado).
+        const LS_DAYS = 'workDays';
+        const LS_PENDING = 'pendingOps';
+        const LS_SHEET_URL = 'sheetUrl';
+        const LS_SHEET_TOKEN = 'sheetToken';
+
+        function readJSON(key, fallback) {
+            try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (e) { return fallback; }
+        }
+
+        // Solo existe "Supervisor" o nada. Los antiguos "Crupier"/"Libre" se tratan como no supervisor.
+        function normalizeDays(days) {
+            const out = {};
+            Object.entries(days || {}).forEach(([k, v]) => {
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !v) return;
+                const status = v.status === 'Supervisor' ? 'Supervisor' : 'Libre';
+                const note = (v.note || '').toString();
+                if (status === 'Supervisor' || note) out[k] = { status, note };
+            });
+            return out;
+        }
+
+        let workDays = normalizeDays(readJSON(LS_DAYS, {}));
+        let pendingOps = readJSON(LS_PENDING, {}); // { 'yyyy-mm-dd': op } — la última operación por día gana
         let currentDate = new Date();
         let currentMonth = currentDate.getMonth();
         let currentYear = currentDate.getFullYear();
         let editingKey = null;
+        let syncing = false;
+        let lastSyncError = '';
         const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+        function dateKey(d) {
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        }
+
+        function persistLocal() {
+            localStorage.setItem(LS_DAYS, JSON.stringify(workDays));
+            localStorage.setItem(LS_PENDING, JSON.stringify(pendingOps));
+        }
 
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.textContent = msg; t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2500);
+            clearTimeout(showToast.timer);
+            showToast.timer = setTimeout(() => t.classList.remove('show'), 2500);
         }
 
+        // --- SINCRONIZACIÓN CON GOOGLE SHEETS ---
+        function sheetUrl() { return (localStorage.getItem(LS_SHEET_URL) || '').trim(); }
+        function sheetToken() { return (localStorage.getItem(LS_SHEET_TOKEN) || '').trim(); }
+
+        function updateSyncStatus() {
+            const el = document.getElementById('syncStatus');
+            const text = document.getElementById('syncText');
+            const pending = Object.keys(pendingOps).length;
+            el.className = 'sync-status';
+            if (!sheetUrl()) { text.textContent = 'Solo local (sin Sheets)'; return; }
+            if (syncing) { el.classList.add('pending'); text.textContent = 'Sincronizando…'; return; }
+            if (lastSyncError) { el.classList.add('error'); text.textContent = `Error: ${lastSyncError}${pending ? ` · ${pending} pendiente(s)` : ''}`; return; }
+            if (pending) { el.classList.add('pending'); text.textContent = `${pending} pendiente(s) de subir`; return; }
+            el.classList.add('ok'); text.textContent = 'Guardado en Sheets';
+        }
+
+        function queueOp(key) {
+            const data = workDays[key];
+            pendingOps[key] = data
+                ? { type: 'upsert', date: key, status: data.status, note: data.note, ts: Date.now() }
+                : { type: 'delete', date: key, ts: Date.now() };
+        }
+
+        async function sheetRequest(ops) {
+            const url = sheetUrl();
+            let res;
+            if (ops) {
+                // text/plain evita el preflight CORS que Apps Script no soporta.
+                res = await fetch(url, { method: 'POST', body: JSON.stringify({ token: sheetToken(), ops }) });
+            } else {
+                const sep = url.includes('?') ? '&' : '?';
+                res = await fetch(`${url}${sep}token=${encodeURIComponent(sheetToken())}&t=${Date.now()}`);
+            }
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            let data;
+            try { data = await res.json(); } catch (e) { throw new Error('Respuesta inválida (¿URL /exec y acceso "Cualquier usuario"?)'); }
+            if (!data.ok) throw new Error(data.error || 'Error del script');
+            return data.days || {};
+        }
+
+        // Sube lo pendiente y descarga todo lo de la hoja.
+        async function syncNow({ silent = true } = {}) {
+            if (!sheetUrl() || syncing) return;
+            if (!navigator.onLine) { lastSyncError = 'sin conexión'; updateSyncStatus(); return; }
+            syncing = true; updateSyncStatus();
+            try {
+                const sent = { ...pendingOps };
+                const ops = Object.values(sent).map(({ ts, ...op }) => op);
+                const serverDays = await sheetRequest(ops.length ? ops : null);
+                // Quitar de la cola solo lo que se envió y no cambió mientras tanto.
+                Object.keys(sent).forEach(k => { if (pendingOps[k] && pendingOps[k].ts === sent[k].ts) delete pendingOps[k]; });
+                // La hoja manda, salvo cambios locales aún sin subir.
+                const merged = normalizeDays(serverDays);
+                Object.values(pendingOps).forEach(op => {
+                    if (op.type === 'delete') delete merged[op.date];
+                    else merged[op.date] = { status: op.status, note: op.note };
+                });
+                workDays = merged;
+                lastSyncError = '';
+                persistLocal();
+                renderCalendar();
+                if (!silent) showToast('Sincronizado con Sheets');
+            } catch (err) {
+                lastSyncError = err.message || 'sin conexión';
+                if (!silent) showToast('No se pudo sincronizar');
+            } finally {
+                syncing = false;
+                updateSyncStatus();
+                // Si hubo cambios durante la sincronización, volver a subir.
+                if (!lastSyncError && Object.keys(pendingOps).length) syncNow();
+            }
+        }
+
+        // --- CALENDARIO ---
         function renderCalendar() {
             const grid = document.getElementById('calendarGrid');
             grid.innerHTML = '';
             document.getElementById('monthYear').textContent = `${monthNames[currentMonth]} ${currentYear}`;
-            
+
             const firstDay = (new Date(currentYear, currentMonth, 1).getDay() + 6) % 7;
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const todayKey = dateKey(new Date());
+            let supervisorCount = 0;
 
-            for(let i=0; i<firstDay; i++) grid.innerHTML += '<div style="background:none"></div>';
+            for (let i = 0; i < firstDay; i++) {
+                const empty = document.createElement('div');
+                empty.style.background = 'none';
+                grid.appendChild(empty);
+            }
 
-            for(let d=1; d<=daysInMonth; d++) {
-                const key = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            for (let d = 1; d <= daysInMonth; d++) {
+                const key = dateKey(new Date(currentYear, currentMonth, d));
                 const data = workDays[key] || {};
-                const isToday = new Date().toISOString().split('T')[0] === key;
-                
+                const isSupervisor = data.status === 'Supervisor';
+                if (isSupervisor) supervisorCount++;
+
                 const dayEl = document.createElement('div');
-                dayEl.className = `day status-${(data.status || 'libre').toLowerCase()} ${isToday ? 'today' : ''}`;
-                dayEl.innerHTML = `
-                    <span class="day-number">${d}</span>
-                    ${data.note ? '<div class="note-dot"></div>' : ''}
-                `;
+                dayEl.className = `day ${isSupervisor ? 'status-supervisor' : 'status-libre'} ${key === todayKey ? 'today' : ''}`;
+                dayEl.innerHTML = `<span class="day-number">${d}</span>${data.note ? '<div class="note-dot"></div>' : ''}`;
                 dayEl.onclick = () => openEditor(key);
                 grid.appendChild(dayEl);
             }
+
+            document.getElementById('monthSummary').textContent =
+                `Días de supervisor en ${monthNames[currentMonth]}: ${supervisorCount}`;
         }
 
         function openEditor(key) {
             editingKey = key;
             const data = workDays[key] || {};
-            const [y, m, d] = key.split('-');
-            document.getElementById('modal-date').textContent = `${d} de ${monthNames[m-1]}`;
-            document.getElementById('status-select').value = data.status || 'Libre';
+            const [, m, d] = key.split('-');
+            document.getElementById('modal-date').textContent = `${parseInt(d)} de ${monthNames[m-1]}`;
+            document.getElementById('modal-current').textContent =
+                data.status === 'Supervisor' ? 'Actualmente: Supervisor ✅' : 'Actualmente: no marcado';
             document.getElementById('note-input').value = data.note || '';
             document.getElementById('day-editor-modal').classList.add('show');
         }
 
-        document.getElementById('save-day-btn').onclick = () => {
-            const status = document.getElementById('status-select').value;
-            const note = document.getElementById('note-input').value.trim();
-            if(status === 'Libre' && !note) delete workDays[editingKey];
-            else workDays[editingKey] = { status, note };
-            localStorage.setItem('workDays', JSON.stringify(workDays));
-            renderCalendar();
+        function closeEditor() {
             document.getElementById('day-editor-modal').classList.remove('show');
-            showToast('Guardado');
-        };
+            editingKey = null;
+        }
+
+        function saveDay(isSupervisor) {
+            if (!editingKey) return;
+            const note = document.getElementById('note-input').value.trim();
+            if (isSupervisor) workDays[editingKey] = { status: 'Supervisor', note };
+            else if (note) workDays[editingKey] = { status: 'Libre', note };
+            else delete workDays[editingKey];
+            if (sheetUrl()) queueOp(editingKey);
+            persistLocal();
+            renderCalendar();
+            closeEditor();
+            showToast(isSupervisor ? 'Marcado como Supervisor' : 'Desmarcado');
+            updateSyncStatus();
+            syncNow();
+        }
+
+        document.getElementById('set-supervisor-btn').onclick = () => saveDay(true);
+        document.getElementById('unset-supervisor-btn').onclick = () => saveDay(false);
+        document.getElementById('cancel-day-btn').onclick = closeEditor;
+        document.getElementById('day-editor-modal').onclick = (e) => { if (e.target.id === 'day-editor-modal') closeEditor(); };
 
         document.getElementById('prevMonth').onclick = () => { currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;} renderCalendar(); };
         document.getElementById('nextMonth').onclick = () => { currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++;} renderCalendar(); };
-        document.getElementById('cancel-day-btn').onclick = () => document.getElementById('day-editor-modal').classList.remove('show');
 
         document.querySelectorAll('.nav-item').forEach(btn => {
             btn.onclick = (e) => {
@@ -328,19 +493,35 @@
             };
         });
 
-        document.getElementById('generateReportBtn').onclick = () => {
+        // --- INFORME (del 16 del mes elegido al 15 del siguiente) ---
+        async function copyText(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                return true;
+            } catch (e) {
+                const ta = document.createElement('textarea');
+                ta.value = text; document.body.appendChild(ta); ta.select();
+                const ok = document.execCommand('copy');
+                ta.remove();
+                return ok;
+            }
+        }
+
+        document.getElementById('generateReportBtn').onclick = async () => {
             const m = parseInt(document.getElementById('reportMonth').value);
             const y = parseInt(document.getElementById('reportYear').value);
-            let start = new Date(y, m, 16);
-            let end = new Date(y, m+1, 15);
-            let result = [];
-            for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)) {
-                const k = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-                if(workDays[k]?.status === 'Supervisor') result.push(`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`);
+            if (isNaN(m) || isNaN(y)) { showToast('Elige mes y año'); return; }
+            const start = new Date(y, m, 16);
+            const end = new Date(y, m + 1, 15);
+            const result = [];
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                if (workDays[dateKey(d)]?.status === 'Supervisor') {
+                    result.push(`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`);
+                }
             }
             const out = `Supervisor ${monthNames[m]}\nTotal: ${result.length}\n----------\n${result.join('\n')}`;
             document.getElementById('reportOutput').textContent = out;
-            navigator.clipboard.writeText(out).then(() => showToast('Informe Copiado'));
+            showToast(await copyText(out) ? 'Informe Copiado' : 'Informe generado (cópialo manualmente)');
         };
 
         document.getElementById('themeToggle').onclick = () => {
@@ -350,33 +531,92 @@
             document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
         };
 
+        // --- CONFIGURACIÓN DE SHEETS ---
+        document.getElementById('saveSheetBtn').onclick = async () => {
+            const url = document.getElementById('sheetUrl').value.trim();
+            const token = document.getElementById('sheetToken').value.trim();
+            if (!/^https:\/\/script\.google(usercontent)?\.com\/.+/.test(url)) {
+                showToast('URL no válida (debe ser de script.google.com)');
+                return;
+            }
+            localStorage.setItem(LS_SHEET_URL, url);
+            localStorage.setItem(LS_SHEET_TOKEN, token);
+            // Subir todo lo que hay en el teléfono para no perder nada (no borra nada de la hoja).
+            Object.keys(workDays).forEach(queueOp);
+            lastSyncError = '';
+            persistLocal();
+            await syncNow({ silent: false });
+        };
+        document.getElementById('syncNowBtn').onclick = () => {
+            if (!sheetUrl()) { showToast('Primero conecta la URL del script'); return; }
+            syncNow({ silent: false });
+        };
+        document.getElementById('disconnectSheetBtn').onclick = () => {
+            if (!confirm('¿Desconectar de Google Sheets? Los datos de la hoja no se borran.')) return;
+            localStorage.removeItem(LS_SHEET_URL);
+            localStorage.removeItem(LS_SHEET_TOKEN);
+            pendingOps = {};
+            lastSyncError = '';
+            persistLocal();
+            document.getElementById('sheetUrl').value = '';
+            document.getElementById('sheetToken').value = '';
+            updateSyncStatus();
+            showToast('Desconectado');
+        };
+
+        // --- COPIA DE SEGURIDAD ---
         document.getElementById('exportDataBtn').onclick = () => {
-            const blob = new Blob([JSON.stringify(workDays)], {type:'application/json'});
+            const blob = new Blob([JSON.stringify(workDays, null, 2)], {type:'application/json'});
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob); a.download='backup_supervisor.json'; a.click();
+            a.href = URL.createObjectURL(blob);
+            a.download = `backup_supervisor_${dateKey(new Date())}.json`;
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(a.href), 1000);
         };
         document.getElementById('importDataBtn').onclick = () => document.getElementById('fileInput').click();
         document.getElementById('fileInput').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
             const reader = new FileReader();
             reader.onload = (ev) => {
-                workDays = JSON.parse(ev.target.result);
-                localStorage.setItem('workDays', JSON.stringify(workDays));
-                renderCalendar(); showToast('Datos Importados');
+                let imported;
+                try { imported = normalizeDays(JSON.parse(ev.target.result)); }
+                catch (err) { showToast('Archivo no válido'); return; }
+                // Combinar en lugar de reemplazar, para no perder días.
+                Object.assign(workDays, imported);
+                if (sheetUrl()) Object.keys(imported).forEach(queueOp);
+                persistLocal();
+                renderCalendar();
+                showToast(`Importados ${Object.keys(imported).length} días`);
+                syncNow();
             };
-            reader.readAsText(e.target.files[0]);
+            reader.readAsText(file);
+            e.target.value = '';
         };
 
-        window.onload = () => {
-            if(localStorage.getItem('theme') === 'dark') {
+        window.addEventListener('online', () => syncNow());
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncNow(); });
+
+        // --- INICIO ---
+        (function init() {
+            if (localStorage.getItem('theme') === 'dark') {
                 document.body.classList.add('dark-mode');
                 document.getElementById('themeToggle').textContent = '☀️';
             }
             const mSelect = document.getElementById('reportMonth');
-            monthNames.forEach((name, i) => mSelect.innerHTML += `<option value="${i}">${name}</option>`);
-            mSelect.value = currentMonth;
-            document.getElementById('reportYear').value = currentYear;
+            monthNames.forEach((name, i) => mSelect.add(new Option(name, i)));
+            // Por defecto el periodo que contiene hoy (16 → 15).
+            const now = new Date();
+            const periodStart = now.getDate() >= 16 ? now : new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            mSelect.value = periodStart.getMonth();
+            document.getElementById('reportYear').value = periodStart.getFullYear();
+            document.getElementById('sheetUrl').value = sheetUrl();
+            document.getElementById('sheetToken').value = sheetToken();
+            persistLocal();
             renderCalendar();
-        };
+            updateSyncStatus();
+            syncNow();
+        })();
     </script>
 </body>
 </html>

@@ -1,54 +1,42 @@
-const CACHE_NAME = 'supervisor-dias-cache-v1';
+const CACHE_NAME = 'supervisor-dias-cache-v2';
+// Rutas relativas para que funcione también en GitHub Pages (/dias-de-supervisor/).
 const urlsToCache = [
-  '/',
-  './', // Alias para el directorio raíz
+  './',
   'index.html',
   'manifest.json',
   'icons/icon-192x192.png',
   'icons/icon-512x512.png'
 ];
 
-// Evento de instalación: se dispara cuando el SW se instala por primera vez.
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Cache abierto');
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)).then(() => self.skipWaiting())
   );
 });
 
-// Evento de activación: se dispara después de la instalación.
-// Aquí se limpian las cachés antiguas.
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
+    caches.keys()
+      .then(names => Promise.all(names.filter(n => n !== CACHE_NAME).map(n => caches.delete(n))))
+      .then(() => self.clients.claim())
   );
 });
 
-// Evento fetch: intercepta las peticiones de red.
-// Intenta servir desde la caché primero, si no, va a la red.
+// Red primero (para recibir siempre la última versión), caché si no hay conexión.
+// Las peticiones a otros dominios (Google Apps Script) no se interceptan.
 self.addEventListener('fetch', event => {
+  const req = event.request;
+  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+
   event.respondWith(
-    caches.match(event.request)
+    fetch(req)
       .then(response => {
-        // Si la respuesta está en la caché, la devuelve.
-        if (response) {
-          return response;
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
         }
-        // Si no, hace la petición a la red.
-        return fetch(event.request);
-      }
-    )
+        return response;
+      })
+      .catch(() => caches.match(req).then(r => r || caches.match('index.html')))
   );
 });
