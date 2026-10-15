@@ -1,11 +1,12 @@
-const CACHE_NAME = 'supervisor-dias-cache-v4';
+const CACHE_NAME = 'supervisor-dias-cache-v5';
 // Rutas relativas para que funcione también en GitHub Pages (/dias-de-supervisor/).
 const urlsToCache = [
   './',
   'index.html',
   'manifest.json',
   'icons/icon-192x192.png',
-  'icons/icon-512x512.png'
+  'icons/icon-512x512.png',
+  'icons/marca/cpn-marca.png'
 ];
 
 self.addEventListener('install', event => {
