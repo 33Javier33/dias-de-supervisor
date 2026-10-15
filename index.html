@@ -173,11 +173,51 @@
         .sync-status.error .sync-dot { background: #dc2626; }
         .month-summary { text-align: center; margin-top: 15px; font-size: 0.85rem; color: var(--text-secondary); }
         .help { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; }
+        .sync-status { cursor: pointer; }
+
+        /* --- Pantalla de bloqueo --- */
+        #lock-screen {
+            position: fixed; inset: 0; z-index: 5000; background: var(--bg-color);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 30px 20px calc(30px + env(safe-area-inset-bottom));
+        }
+        #lock-screen.hidden { display: none; }
+        .lock-logo { font-size: 2.6rem; margin-bottom: 6px; }
+        .lock-title { font-size: 1.3rem; font-weight: 800; margin: 0 0 6px; text-align: center; }
+        .lock-msg { min-height: 1.3em; font-size: 0.85rem; color: var(--text-secondary); text-align: center; margin-bottom: 18px; }
+        .lock-msg.error { color: #dc2626; }
+        .pin-dots { display: flex; gap: 14px; margin-bottom: 28px; }
+        .pin-dots span { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--primary); transition: var(--transition); }
+        .pin-dots span.filled { background: var(--primary); }
+        .pin-dots.shake { animation: shake 0.35s; }
+        @keyframes shake { 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
+        .keypad { display: grid; grid-template-columns: repeat(3, 72px); gap: 16px; }
+        .key {
+            height: 72px; border-radius: 50%; border: none; font-size: 1.6rem; font-weight: 600;
+            background: var(--container-bg); color: var(--text-main); box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            cursor: pointer; font-family: inherit;
+        }
+        .key:active { background: var(--primary-light); }
+        .key.plain { background: none; box-shadow: none; font-size: 1.4rem; }
+        .key:disabled { visibility: hidden; }
+        .lock-link { background: none; border: none; color: var(--primary); font-weight: 700; font-size: 0.9rem; margin-top: 22px; cursor: pointer; }
+        .lock-brand { position: absolute; bottom: calc(14px + env(safe-area-inset-bottom)); font-size: 0.7rem; color: var(--text-secondary); }
     </style>
 </head>
 <body>
 
     <div id="toast">Copiado</div>
+
+    <!-- Pantalla de bloqueo: visible desde el inicio para no mostrar datos antes del PIN -->
+    <div id="lock-screen">
+        <div class="lock-logo">🔒</div>
+        <h1 class="lock-title" id="lockTitle">Supervisión</h1>
+        <div class="lock-msg" id="lockMsg">Cargando…</div>
+        <div class="pin-dots" id="pinDots"></div>
+        <div class="keypad" id="keypad"></div>
+        <button class="lock-link" id="lockAltBtn" style="display:none"></button>
+        <div class="lock-brand">Carlos P. Nauto Interactive® 2026</div>
+    </div>
 
     <header class="app-header">
         <div>
@@ -217,9 +257,15 @@
 
         <div id="config-section" class="section-container">
             <div class="card">
+                <h3 style="margin-top:0">Seguridad</h3>
+                <p class="help">La app pide tu PIN al abrirse y tras 1 minuto en segundo plano. Sin el PIN no se puede ver ni modificar ningún dato.</p>
+                <button id="bioToggleBtn" class="btn btn-secondary" style="display:none">Activar huella / rostro</button>
+                <button id="changePinBtn" class="btn btn-secondary">Cambiar PIN</button>
+                <button id="lockNowBtn" class="btn btn-danger">Bloquear ahora</button>
+            </div>
+            <div class="card">
                 <h3 style="margin-top:0">Base de datos</h3>
-                <p class="help">Tus días se guardan automáticamente en Supabase (proyecto socios-comicion). El teléfono guarda una copia para funcionar sin conexión y sube los cambios en cuanto vuelve la red.</p>
-                <button id="syncNowBtn" class="btn btn-secondary">Sincronizar ahora</button>
+                <p class="help">Todo se guarda solo en Supabase (proyecto socios-comicion) al marcar un día, y los demás dispositivos se actualizan automáticamente. Sin conexión, el teléfono guarda los cambios y los sube al volver la red.</p>
             </div>
             <div class="card">
                 <h3 style="margin-top:0">Copia de Seguridad</h3>
@@ -230,7 +276,7 @@
         </div>
 
         <div style="text-align: center; color: var(--text-secondary); font-size: 0.7rem; margin-top: 20px;">
-            CarlosPN Interactive® 2026
+            Carlos P. Nauto Interactive® 2026
         </div>
     </main>
 
@@ -281,16 +327,21 @@
 
         // --- DATOS ---
         // --- SUPABASE (proyecto socios-comicion) ---
-        // Clave pública "anon" (la misma que usa la app socios-comicion). Las políticas RLS de la
-        // tabla dias_supervisor solo permiten leer, crear y modificar días (no borrar).
+        // Clave pública "anon" (la misma que usa la app socios-comicion). La tabla no es accesible
+        // directamente: solo mediante funciones que exigen el PIN (ver supabase/migrations).
         const SUPABASE_URL = 'https://teemahksasdougehrcly.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlZW1haGtzYXNkb3VnZWhyY2x5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyOTkwNjIsImV4cCI6MjA5Njg3NTA2Mn0.EIQ7gRcwf3zYgvGESKw3s5lnZMABN_EuNWsrJK3L1zk';
-        const SUPABASE_TABLE = 'dias_supervisor';
+        const PIN_LENGTH = 6;
+        const AUTO_SYNC_MS = 15000;      // revisión periódica de cambios de otros dispositivos
+        const AUTO_LOCK_MS = 60000;      // bloquear tras 1 minuto en segundo plano
 
         // localStorage es solo caché/offline. La fuente de verdad es Supabase.
         const LS_DAYS = 'workDays';
         const LS_PENDING = 'pendingOps';
         const LS_INITIAL_UPLOAD = 'sbInitialUploadDone';
+        const LS_PIN_HASH = 'pinLocalHash';   // para desbloquear sin conexión
+        const LS_BIO_ID = 'bioCredId';
+        const LS_BIO_PIN = 'bioPin';
 
         function readJSON(key, fallback) {
             try { return JSON.parse(localStorage.getItem(key)) || fallback; } catch (e) { return fallback; }
@@ -316,6 +367,7 @@
         let editingKey = null;
         let syncing = false;
         let lastSyncError = '';
+        let currentPin = null;           // solo en memoria mientras la app está desbloqueada
         const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
         function dateKey(d) {
@@ -335,40 +387,66 @@
         }
 
         // --- SINCRONIZACIÓN CON SUPABASE ---
-        async function sbFetch(path, options = {}) {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-                ...options,
+        async function rpc(name, body = {}) {
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+                method: 'POST',
                 headers: {
                     apikey: SUPABASE_ANON_KEY,
                     Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-                    'Content-Type': 'application/json',
-                    ...(options.headers || {})
-                }
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
             });
-            if (!res.ok) {
-                const data = await res.json().catch(() => ({}));
-                throw new Error(data.message || `HTTP ${res.status}`);
+            const data = await res.json().catch(() => null);
+            if (!res.ok) throw new Error(data?.message || `HTTP ${res.status}`);
+            return data;
+        }
+
+        class PinError extends Error {
+            constructor(result) { super(pinErrorText(result)); this.result = result; }
+        }
+
+        function pinErrorText(r) {
+            if (r.error === 'pin_incorrecto') return `PIN incorrecto${r.restantes ? ` · quedan ${r.restantes} intento(s)` : ''}`;
+            if (r.error === 'bloqueado') {
+                const hasta = new Date(r.hasta);
+                return `Demasiados intentos. Bloqueado hasta las ${hasta.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
             }
-            return res.status === 204 || res.status === 201 ? null : res.json();
+            if (r.error === 'sin_pin') return 'No hay PIN configurado';
+            if (r.error === 'ya_existe') return 'Ya existe un PIN. Ingrésalo.';
+            if (r.error === 'pin_invalido') return `El PIN debe tener ${PIN_LENGTH} números`;
+            return r.error || 'Error';
+        }
+
+        function daysFromServer(list) {
+            const days = {};
+            (list || []).forEach(r => { days[r.fecha] = { status: r.estado, note: r.nota || '' }; });
+            return days;
         }
 
         // Sube las operaciones pendientes y devuelve todos los días guardados en Supabase.
-        // Desmarcar un día se guarda como estado "Libre" (la tabla no permite borrar).
+        // Desmarcar un día se guarda como estado "Libre" (no se borra nada).
         async function remoteSync(ops) {
             const rows = ops.map(o => o.type === 'delete'
                 ? { fecha: o.date, estado: 'Libre', nota: '' }
                 : { fecha: o.date, estado: o.status, nota: o.note || '' });
-            if (rows.length) {
-                await sbFetch(`${SUPABASE_TABLE}?on_conflict=fecha`, {
-                    method: 'POST',
-                    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
-                    body: JSON.stringify(rows)
-                });
-            }
-            const data = await sbFetch(`${SUPABASE_TABLE}?select=fecha,estado,nota&order=fecha`);
-            const days = {};
-            data.forEach(r => { days[r.fecha] = { status: r.estado, note: r.nota || '' }; });
-            return days;
+            const r = rows.length
+                ? await rpc('dias_supervisor_guardar', { p_pin: currentPin, p_dias: rows })
+                : await rpc('dias_supervisor_listar', { p_pin: currentPin });
+            if (!r?.ok) throw new PinError(r || {});
+            return daysFromServer(r.dias);
+        }
+
+        // Supabase manda, salvo cambios locales aún sin subir.
+        function applyServerDays(serverDays) {
+            const merged = normalizeDays(serverDays);
+            Object.values(pendingOps).forEach(op => {
+                if (op.type === 'delete') delete merged[op.date];
+                else merged[op.date] = { status: op.status, note: op.note };
+            });
+            workDays = merged;
+            persistLocal();
+            renderCalendar();
         }
 
         function updateSyncStatus() {
@@ -391,7 +469,7 @@
 
         // Sube lo pendiente y descarga todo lo guardado en Supabase.
         async function syncNow({ silent = true } = {}) {
-            if (syncing) return;
+            if (syncing || !currentPin) return;
             if (!navigator.onLine) { lastSyncError = 'sin conexión'; updateSyncStatus(); return; }
             syncing = true; updateSyncStatus();
             try {
@@ -400,18 +478,17 @@
                 const serverDays = await remoteSync(ops);
                 // Quitar de la cola solo lo que se envió y no cambió mientras tanto.
                 Object.keys(sent).forEach(k => { if (pendingOps[k] && pendingOps[k].ts === sent[k].ts) delete pendingOps[k]; });
-                // Supabase manda, salvo cambios locales aún sin subir.
-                const merged = normalizeDays(serverDays);
-                Object.values(pendingOps).forEach(op => {
-                    if (op.type === 'delete') delete merged[op.date];
-                    else merged[op.date] = { status: op.status, note: op.note };
-                });
-                workDays = merged;
                 lastSyncError = '';
-                persistLocal();
-                renderCalendar();
-                if (!silent) showToast('Sincronizado con Supabase');
+                applyServerDays(serverDays);
+                if (ops.length) rtNotify();   // avisar a los otros dispositivos
+                if (!silent) showToast('Sincronizado');
             } catch (err) {
+                if (err instanceof PinError) {
+                    // El PIN cambió en otro dispositivo o se reinició: pedirlo de nuevo.
+                    lastSyncError = '';
+                    lockApp(err.result.error === 'bloqueado' ? err.message : 'Ingresa tu PIN de nuevo');
+                    return;
+                }
                 lastSyncError = err instanceof TypeError ? 'sin conexión' : (err.message || 'sin conexión');
                 if (!silent) showToast('No se pudo sincronizar');
             } finally {
@@ -503,6 +580,7 @@
                 document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
                 document.getElementById(target).classList.add('active');
                 btn.classList.add('active');
+                if (target === 'config-section') updateBioButton();
             };
         });
 
@@ -544,7 +622,7 @@
             document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
         };
 
-        document.getElementById('syncNowBtn').onclick = () => syncNow({ silent: false });
+        document.getElementById('syncStatus').onclick = () => syncNow({ silent: false });
 
         // --- COPIA DE SEGURIDAD ---
         document.getElementById('exportDataBtn').onclick = () => {
@@ -576,8 +654,315 @@
             e.target.value = '';
         };
 
-        window.addEventListener('online', () => syncNow());
-        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') syncNow(); });
+        // --- TIEMPO REAL: aviso instantáneo entre dispositivos (Supabase Realtime Broadcast) ---
+        // Solo se envía un "hubo cambios" (sin datos); cada dispositivo descarga con su PIN.
+        const RT_TOPIC = 'realtime:dias-supervisor';
+        const rt = { ws: null, ref: 0, heartbeat: null, retry: 0 };
+
+        function rtSend(msg) {
+            if (rt.ws && rt.ws.readyState === WebSocket.OPEN) rt.ws.send(JSON.stringify({ ...msg, ref: String(++rt.ref) }));
+        }
+
+        function rtConnect() {
+            if (!currentPin || rt.ws || !('WebSocket' in window)) return;
+            const url = `${SUPABASE_URL.replace(/^http/, 'ws')}/realtime/v1/websocket?apikey=${SUPABASE_ANON_KEY}&vsn=1.0.0`;
+            let ws;
+            try { ws = new WebSocket(url); } catch (e) { return; }
+            rt.ws = ws;
+            ws.onopen = () => {
+                rt.retry = 0;
+                rtSend({ topic: RT_TOPIC, event: 'phx_join', payload: {
+                    config: { broadcast: { self: false, ack: false }, presence: { key: '' }, postgres_changes: [], private: false },
+                    access_token: SUPABASE_ANON_KEY
+                } });
+                rt.heartbeat = setInterval(() => rtSend({ topic: 'phoenix', event: 'heartbeat', payload: {} }), 25000);
+            };
+            ws.onmessage = (e) => {
+                let m; try { m = JSON.parse(e.data); } catch (err) { return; }
+                if (m.topic === RT_TOPIC && m.event === 'broadcast' && m.payload?.event === 'cambio') syncNow();
+            };
+            ws.onclose = () => {
+                clearInterval(rt.heartbeat);
+                if (rt.ws === ws) rt.ws = null;
+                if (currentPin) setTimeout(rtConnect, Math.min(30000, 2000 * 2 ** rt.retry++));
+            };
+            ws.onerror = () => ws.close();
+        }
+
+        function rtDisconnect() {
+            const ws = rt.ws;
+            rt.ws = null;
+            clearInterval(rt.heartbeat);
+            if (ws) { ws.onclose = null; ws.close(); }
+        }
+
+        function rtNotify() {
+            rtSend({ topic: RT_TOPIC, event: 'broadcast', payload: { type: 'broadcast', event: 'cambio', payload: {} } });
+        }
+
+        // Respaldo: revisión periódica mientras la app está abierta y desbloqueada.
+        setInterval(() => { if (currentPin && document.visibilityState === 'visible') syncNow(); }, AUTO_SYNC_MS);
+        window.addEventListener('online', () => { syncNow(); rtConnect(); });
+
+        let hiddenAt = 0;
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') { hiddenAt = Date.now(); return; }
+            if (currentPin && hiddenAt && Date.now() - hiddenAt > AUTO_LOCK_MS) { lockApp(); return; }
+            syncNow();
+            rtConnect();
+        });
+
+        // --- BLOQUEO CON PIN Y HUELLA / ROSTRO ---
+        const lock = { mode: 'loading', entry: '', temp: '', oldPin: '', busy: false };
+        const LOCK_TITLES = {
+            loading: 'Supervisión', offline: 'Sin conexión', unlock: 'Ingresa tu PIN',
+            create: 'Crea tu PIN', confirm: 'Repite tu PIN',
+            'change-old': 'PIN actual', 'change-new': 'Nuevo PIN', 'change-confirm': 'Repite el nuevo PIN'
+        };
+
+        async function sha256(text) {
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        const localPinHash = (pin) => sha256(`dias-supervisor:${pin}`);
+
+        function setLockMode(mode, msg = '', isError = false) {
+            lock.mode = mode; lock.entry = '';
+            document.getElementById('lock-screen').classList.remove('hidden');
+            document.getElementById('lockTitle').textContent = LOCK_TITLES[mode];
+            const msgEl = document.getElementById('lockMsg');
+            msgEl.textContent = msg; msgEl.classList.toggle('error', isError);
+            const showPad = !['loading', 'offline'].includes(mode);
+            document.getElementById('pinDots').style.visibility = showPad ? 'visible' : 'hidden';
+            document.getElementById('keypad').style.visibility = showPad ? 'visible' : 'hidden';
+            const alt = document.getElementById('lockAltBtn');
+            alt.style.display = 'none';
+            if (mode.startsWith('change')) { alt.textContent = 'Cancelar'; alt.style.display = 'block'; }
+            else if (mode === 'offline') { alt.textContent = 'Reintentar'; alt.style.display = 'block'; }
+            renderLock();
+        }
+
+        function renderLock() {
+            document.getElementById('pinDots').innerHTML =
+                Array.from({ length: PIN_LENGTH }, (_, i) => `<span class="${i < lock.entry.length ? 'filled' : ''}"></span>`).join('');
+            document.getElementById('bioKey').disabled = !(lock.mode === 'unlock' && localStorage.getItem(LS_BIO_ID));
+        }
+
+        function lockError(msg) {
+            setLockMode(lock.mode, msg, true);
+            const dots = document.getElementById('pinDots');
+            dots.classList.remove('shake'); void dots.offsetWidth; dots.classList.add('shake');
+            if (navigator.vibrate) navigator.vibrate(150);
+        }
+
+        function buildKeypad() {
+            const keys = ['1','2','3','4','5','6','7','8','9','bio','0','del'];
+            document.getElementById('keypad').innerHTML = keys.map(k => {
+                if (k === 'bio') return '<button class="key plain" id="bioKey" aria-label="Huella o rostro">👆</button>';
+                if (k === 'del') return '<button class="key plain" data-key="del" aria-label="Borrar">⌫</button>';
+                return `<button class="key" data-key="${k}">${k}</button>`;
+            }).join('');
+            document.getElementById('keypad').onclick = (e) => {
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                if (btn.id === 'bioKey') bioUnlock();
+                else pressKey(btn.dataset.key);
+            };
+            document.addEventListener('keydown', (e) => {
+                if (document.getElementById('lock-screen').classList.contains('hidden')) return;
+                if (/^[0-9]$/.test(e.key)) pressKey(e.key);
+                else if (e.key === 'Backspace') pressKey('del');
+            });
+        }
+
+        function pressKey(k) {
+            if (lock.busy || ['loading', 'offline'].includes(lock.mode)) return;
+            if (k === 'del') lock.entry = lock.entry.slice(0, -1);
+            else if (lock.entry.length < PIN_LENGTH) lock.entry += k;
+            renderLock();
+            if (lock.entry.length === PIN_LENGTH) setTimeout(() => submitPin(lock.entry), 120);
+        }
+
+        async function submitPin(pin) {
+            lock.busy = true;
+            try {
+                if (lock.mode === 'unlock') await tryUnlock(pin);
+                else if (lock.mode === 'create') { lock.temp = pin; setLockMode('confirm'); }
+                else if (lock.mode === 'confirm') {
+                    if (pin !== lock.temp) { setLockMode('create'); lockError('Los PIN no coinciden. Inténtalo de nuevo.'); return; }
+                    document.getElementById('lockMsg').textContent = 'Guardando…';
+                    const r = await rpc('dias_supervisor_crear_pin', { p_pin: pin });
+                    if (r?.ok) await unlocked(pin, r.dias);
+                    else if (r?.error === 'ya_existe') setLockMode('unlock', pinErrorText(r));
+                    else lockError(pinErrorText(r || {}));
+                }
+                else if (lock.mode === 'change-old') { lock.oldPin = pin; setLockMode('change-new'); }
+                else if (lock.mode === 'change-new') { lock.temp = pin; setLockMode('change-confirm'); }
+                else if (lock.mode === 'change-confirm') {
+                    if (pin !== lock.temp) { setLockMode('change-new'); lockError('Los PIN no coinciden'); return; }
+                    const r = await rpc('dias_supervisor_cambiar_pin', { p_pin: lock.oldPin, p_nuevo: pin });
+                    if (!r?.ok) { setLockMode('change-old'); lockError(pinErrorText(r || {})); return; }
+                    currentPin = pin;
+                    await rememberPin(pin);
+                    hideLock();
+                    showToast('PIN cambiado');
+                }
+            } catch (err) {
+                lockError(err instanceof TypeError ? 'Sin conexión. Inténtalo de nuevo.' : err.message);
+            } finally {
+                lock.busy = false;
+            }
+        }
+
+        // Verifica el PIN en Supabase; sin conexión, contra el último PIN válido de este dispositivo.
+        async function tryUnlock(pin) {
+            document.getElementById('lockMsg').textContent = 'Verificando…';
+            document.getElementById('lockMsg').classList.remove('error');
+            let r;
+            try {
+                r = await rpc('dias_supervisor_listar', { p_pin: pin });
+            } catch (err) {
+                const saved = localStorage.getItem(LS_PIN_HASH);
+                if (saved && saved === await localPinHash(pin)) { await unlocked(pin, null); return; }
+                lockError(saved ? 'PIN incorrecto' : 'Sin conexión. Inténtalo de nuevo.');
+                return;
+            }
+            if (r?.ok) { await unlocked(pin, r.dias); return; }
+            if (r?.error === 'sin_pin') {
+                // El PIN se reinició desde Supabase: crear uno nuevo.
+                localStorage.removeItem(LS_PIN_HASH); disableBio();
+                setLockMode('create', 'Crea un PIN nuevo de 6 números');
+                return;
+            }
+            lockError(pinErrorText(r || {}));
+        }
+
+        async function rememberPin(pin) {
+            localStorage.setItem(LS_PIN_HASH, await localPinHash(pin));
+            if (localStorage.getItem(LS_BIO_ID)) localStorage.setItem(LS_BIO_PIN, pin);
+        }
+
+        async function unlocked(pin, serverList) {
+            currentPin = pin;
+            await rememberPin(pin);
+            hideLock();
+            if (serverList) applyServerDays(daysFromServer(serverList));
+            else renderCalendar();
+            updateSyncStatus();
+            syncNow();
+            rtConnect();
+            offerBio();
+        }
+
+        function hideLock() {
+            document.getElementById('lock-screen').classList.add('hidden');
+            lock.entry = ''; lock.temp = ''; lock.oldPin = '';
+        }
+
+        function lockApp(msg = '') {
+            currentPin = null;
+            rtDisconnect();
+            closeEditor();
+            setLockMode('unlock', msg);
+            if (!msg) bioUnlock(true);
+        }
+
+        async function startLock() {
+            if (localStorage.getItem(LS_PIN_HASH)) { setLockMode('unlock'); bioUnlock(true); return; }
+            setLockMode('loading', 'Conectando…');
+            try {
+                const configured = await rpc('dias_supervisor_pin_configurado');
+                if (configured) setLockMode('unlock');
+                else setLockMode('create', `Elige un PIN de ${PIN_LENGTH} números para proteger tus datos`);
+            } catch (err) {
+                setLockMode('offline', 'Conéctate a internet para el primer ingreso');
+            }
+        }
+
+        document.getElementById('lockAltBtn').onclick = () => {
+            if (lock.mode.startsWith('change')) hideLock();
+            else startLock();
+        };
+        window.addEventListener('online', () => { if (lock.mode === 'offline') startLock(); });
+
+        // Huella / rostro (WebAuthn con el sensor del teléfono). Desbloquea usando el PIN guardado en este dispositivo.
+        const b64 = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf)));
+        const unb64 = (str) => Uint8Array.from(atob(str), c => c.charCodeAt(0));
+        const randomBytes = (n) => crypto.getRandomValues(new Uint8Array(n));
+
+        async function bioAvailable() {
+            try {
+                return !!(window.PublicKeyCredential &&
+                    await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable());
+            } catch (e) { return false; }
+        }
+
+        async function enableBio() {
+            if (!currentPin) return;
+            try {
+                const cred = await navigator.credentials.create({ publicKey: {
+                    challenge: randomBytes(32),
+                    rp: { name: 'Supervisión' },
+                    user: { id: randomBytes(16), name: 'supervisor', displayName: 'Supervisión' },
+                    pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+                    authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required', residentKey: 'discouraged' },
+                    timeout: 60000
+                } });
+                localStorage.setItem(LS_BIO_ID, b64(cred.rawId));
+                localStorage.setItem(LS_BIO_PIN, currentPin);
+                showToast('Huella / rostro activado');
+            } catch (e) {
+                showToast('No se pudo activar huella / rostro');
+            }
+            updateBioButton();
+        }
+
+        function disableBio() {
+            localStorage.removeItem(LS_BIO_ID);
+            localStorage.removeItem(LS_BIO_PIN);
+            updateBioButton();
+        }
+
+        async function bioUnlock(auto = false) {
+            const id = localStorage.getItem(LS_BIO_ID);
+            const pin = localStorage.getItem(LS_BIO_PIN);
+            if (!id || !pin || lock.mode !== 'unlock' || lock.busy) return;
+            try {
+                await navigator.credentials.get({ publicKey: {
+                    challenge: randomBytes(32),
+                    allowCredentials: [{ type: 'public-key', id: unb64(id) }],
+                    userVerification: 'required',
+                    timeout: 60000
+                } });
+            } catch (e) {
+                if (!auto) showToast('Usa tu PIN');
+                return;
+            }
+            lock.busy = true;
+            try { await tryUnlock(pin); } finally { lock.busy = false; }
+        }
+
+        async function offerBio() {
+            if (localStorage.getItem(LS_BIO_ID) || localStorage.getItem('bioOffered') || !(await bioAvailable())) return;
+            localStorage.setItem('bioOffered', '1');
+            if (confirm('¿Quieres desbloquear la app con tu huella o rostro?')) enableBio();
+        }
+
+        async function updateBioButton() {
+            const btn = document.getElementById('bioToggleBtn');
+            btn.style.display = (await bioAvailable()) ? 'block' : 'none';
+            btn.textContent = localStorage.getItem(LS_BIO_ID) ? 'Desactivar huella / rostro' : 'Activar huella / rostro';
+        }
+
+        document.getElementById('bioToggleBtn').onclick = () => {
+            if (localStorage.getItem(LS_BIO_ID)) { disableBio(); showToast('Huella / rostro desactivado'); }
+            else enableBio();
+        };
+        document.getElementById('changePinBtn').onclick = () => {
+            if (!navigator.onLine) { showToast('Necesitas conexión para cambiar el PIN'); return; }
+            setLockMode('change-old');
+        };
+        document.getElementById('lockNowBtn').onclick = () => lockApp();
 
         // --- INICIO ---
         (function init() {
@@ -598,9 +983,10 @@
                 localStorage.setItem(LS_INITIAL_UPLOAD, '1');
             }
             persistLocal();
-            renderCalendar();
             updateSyncStatus();
-            syncNow();
+            buildKeypad();
+            updateBioButton();
+            startLock();
         })();
     </script>
 </body>
