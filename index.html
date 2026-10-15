@@ -27,8 +27,8 @@
             --tab-bg: rgba(255, 255, 255, 0.85);
             
             --status-libre-bg: #f1f5f9;
-            --status-supervisor-bg: #dcfce7;
-            --status-supervisor-text: #15803d;
+            --status-supervisor-bg: #15803d;
+            --status-supervisor-text: #ffffff;
             --status-crupier-bg: #e0f2fe;
             --status-crupier-text: #0369a1;
             
@@ -46,8 +46,8 @@
             --border-color: #334155;
             --tab-bg: rgba(30, 41, 59, 0.9);
             --status-libre-bg: #334155;
-            --status-supervisor-bg: #064e3b;
-            --status-supervisor-text: #6ee7b7;
+            --status-supervisor-bg: #16a34a;
+            --status-supervisor-text: #ffffff;
             --status-crupier-bg: #0c4a6e;
             --status-crupier-text: #7dd3fc;
         }
@@ -117,7 +117,14 @@
             position: relative; cursor: pointer; transition: var(--transition);
         }
         .day-number { font-size: 0.95rem; font-weight: 600; }
-        .day.status-supervisor { background: var(--status-supervisor-bg); color: var(--status-supervisor-text); }
+        .day.status-supervisor {
+            background: var(--status-supervisor-bg); color: var(--status-supervisor-text);
+            box-shadow: 0 3px 8px rgba(21, 128, 61, 0.35);
+        }
+        .day.status-supervisor .day-number { font-weight: 800; }
+        .day.status-supervisor .note-dot { background: #ffffff; }
+        .day.flash { animation: flash 1.2s ease-out; }
+        @keyframes flash { 0%, 40% { transform: scale(1.18); box-shadow: 0 0 0 6px var(--primary-light); } 100% { transform: scale(1); } }
         .day.status-crupier { background: var(--status-crupier-bg); color: var(--status-crupier-text); }
         .day.today { outline: 2px solid var(--primary); outline-offset: 2px; }
         .note-dot { width: 4px; height: 4px; background: #f43f5e; border-radius: 50%; position: absolute; top: 6px; right: 6px; }
@@ -174,6 +181,31 @@
         .month-summary { text-align: center; margin-top: 15px; font-size: 0.85rem; color: var(--text-secondary); }
         .help { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; }
         .sync-status { cursor: pointer; }
+
+        .month-center { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+        .today-btn {
+            border: none; border-radius: 50px; padding: 4px 14px; font-size: 0.75rem; font-weight: 700;
+            background: var(--primary-light); color: var(--primary); cursor: pointer; font-family: inherit;
+        }
+        body.dark-mode .today-btn { background: #312e81; color: #c7d2fe; }
+
+        .period-card { margin-top: 20px; }
+        .period-card h3 { margin: 0 0 12px; font-size: 1rem; }
+        .period-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .period-tile {
+            border-radius: var(--radius-md); padding: 14px; background: var(--status-libre-bg);
+            border: 2px solid transparent; cursor: pointer; text-align: left; font-family: inherit; color: var(--text-main);
+            display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start;
+        }
+        .period-tile.current { border-color: var(--status-supervisor-bg); }
+        .period-name { font-size: 0.85rem; font-weight: 800; }
+        .period-range { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+        .period-count { font-size: 2.2rem; font-weight: 800; line-height: 1.1; margin-top: 8px; color: var(--status-supervisor-bg); }
+        .period-count small { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); }
+        .period-badge {
+            display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 50px; font-size: 0.65rem; font-weight: 800;
+            background: var(--status-supervisor-bg); color: #fff;
+        }
 
         /* --- Pantalla de bloqueo --- */
         #lock-screen {
@@ -232,14 +264,20 @@
             <div class="calendar-card">
                 <div class="calendar-header">
                     <button class="nav-btn" id="prevMonth">←</button>
-                    <h2 id="monthYear">Febrero 2026</h2>
+                    <div class="month-center">
+                        <h2 id="monthYear">Febrero 2026</h2>
+                        <button id="todayBtn" class="today-btn">Hoy</button>
+                    </div>
                     <button class="nav-btn" id="nextMonth">→</button>
                 </div>
                 <div class="weekdays">
                     <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
                 </div>
                 <div id="calendarGrid" class="day-grid"></div>
-                <div id="monthSummary" class="month-summary"></div>
+            </div>
+            <div class="card period-card">
+                <h3>Días de supervisor por periodo</h3>
+                <div id="periodGrid" class="period-grid"></div>
             </div>
         </div>
 
@@ -508,7 +546,6 @@
             const firstDay = (new Date(currentYear, currentMonth, 1).getDay() + 6) % 7;
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
             const todayKey = dateKey(new Date());
-            let supervisorCount = 0;
 
             for (let i = 0; i < firstDay; i++) {
                 const empty = document.createElement('div');
@@ -520,7 +557,6 @@
                 const key = dateKey(new Date(currentYear, currentMonth, d));
                 const data = workDays[key] || {};
                 const isSupervisor = data.status === 'Supervisor';
-                if (isSupervisor) supervisorCount++;
 
                 const dayEl = document.createElement('div');
                 dayEl.className = `day ${isSupervisor ? 'status-supervisor' : 'status-libre'} ${key === todayKey ? 'today' : ''}`;
@@ -529,8 +565,57 @@
                 grid.appendChild(dayEl);
             }
 
-            document.getElementById('monthSummary').textContent =
-                `Días de supervisor en ${monthNames[currentMonth]}: ${supervisorCount}`;
+            renderPeriods();
+        }
+
+        // Periodo de pago: del 16 del mes m al 15 del mes siguiente (igual que el informe).
+        const shortMonths = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+        function periodInfo(y, m) {
+            const start = new Date(y, m, 16);
+            const end = new Date(y, m + 1, 15);
+            const days = [];
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                if (workDays[dateKey(d)]?.status === 'Supervisor') days.push(new Date(d));
+            }
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            return { start, end, days, month: start.getMonth(), year: start.getFullYear(), current: today >= start && today <= end };
+        }
+
+        // Los dos periodos que tocan el mes visible: el que termina el 15 y el que empieza el 16.
+        function renderPeriods() {
+            const grid = document.getElementById('periodGrid');
+            grid.innerHTML = '';
+            [periodInfo(currentYear, currentMonth - 1), periodInfo(currentYear, currentMonth)].forEach(p => {
+                const tile = document.createElement('button');
+                tile.className = `period-tile ${p.current ? 'current' : ''}`;
+                const fmt = (d) => `${d.getDate()} ${shortMonths[d.getMonth()]}`;
+                tile.innerHTML = `
+                    <div class="period-name">${monthNames[p.month]}</div>
+                    <div class="period-range">${fmt(p.start)} – ${fmt(p.end)}</div>
+                    <div class="period-count">${p.days.length} <small>${p.days.length === 1 ? 'día' : 'días'}</small></div>
+                    ${p.current ? '<span class="period-badge">EN CURSO</span>' : ''}`;
+                tile.onclick = () => openReport(p.month, p.year);
+                grid.appendChild(tile);
+            });
+        }
+
+        function openReport(m, y) {
+            document.getElementById('reportMonth').value = m;
+            document.getElementById('reportYear').value = y;
+            document.querySelector('.nav-item[data-section="report-section"]').click();
+        }
+
+        function goToToday() {
+            const now = new Date();
+            currentMonth = now.getMonth();
+            currentYear = now.getFullYear();
+            renderCalendar();
+            const el = document.querySelector('#calendarGrid .day.today');
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                el.classList.add('flash');
+                setTimeout(() => el.classList.remove('flash'), 1300);
+            }
         }
 
         function openEditor(key) {
@@ -570,6 +655,7 @@
         document.getElementById('day-editor-modal').onclick = (e) => { if (e.target.id === 'day-editor-modal') closeEditor(); };
 
         document.getElementById('prevMonth').onclick = () => { currentMonth--; if(currentMonth<0){currentMonth=11; currentYear--;} renderCalendar(); };
+        document.getElementById('todayBtn').onclick = goToToday;
         document.getElementById('nextMonth').onclick = () => { currentMonth++; if(currentMonth>11){currentMonth=0; currentYear++;} renderCalendar(); };
 
         document.querySelectorAll('.nav-item').forEach(btn => {

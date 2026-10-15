@@ -1,4 +1,4 @@
-const CACHE_NAME = 'supervisor-dias-cache-v3';
+const CACHE_NAME = 'supervisor-dias-cache-v4';
 // Rutas relativas para que funcione también en GitHub Pages (/dias-de-supervisor/).
 const urlsToCache = [
   './',
