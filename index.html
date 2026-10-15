@@ -9,7 +9,15 @@
     <link rel="manifest" href="manifest.json">
     
     <!-- Color de la barra de navegación en Android -->
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#f8fafc">
+    <script>
+        // Aplica el tema guardado antes de pintar la página.
+        (function () {
+            var t = 'light';
+            try { t = localStorage.getItem('theme') || 'light'; } catch (e) {}
+            document.documentElement.dataset.theme = t;
+        })();
+    </script>
     
     <!-- Icono para iOS (iPhone/iPad) -->
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
@@ -38,7 +46,10 @@
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        body.dark-mode {
+        /* --- TEMAS (5): claro, oscuro, AMOLED, neón y océano --- */
+        html[data-theme="dark"] {
+            --primary: #818cf8;
+            --primary-light: #312e81;
             --bg-color: #0f172a;
             --container-bg: #1e293b;
             --text-main: #f1f5f9;
@@ -47,10 +58,45 @@
             --tab-bg: rgba(30, 41, 59, 0.9);
             --status-libre-bg: #334155;
             --status-supervisor-bg: #16a34a;
-            --status-supervisor-text: #ffffff;
-            --status-crupier-bg: #0c4a6e;
-            --status-crupier-text: #7dd3fc;
         }
+        html[data-theme="amoled"] {
+            --primary: #a5b4fc;
+            --primary-light: #1e1b4b;
+            --bg-color: #000000;
+            --container-bg: #0b0b0b;
+            --text-main: #fafafa;
+            --text-secondary: #a3a3a3;
+            --border-color: #262626;
+            --tab-bg: rgba(0, 0, 0, 0.92);
+            --status-libre-bg: #1a1a1a;
+            --status-supervisor-bg: #16a34a;
+        }
+        html[data-theme="neon"] {
+            --primary: #e879f9;
+            --primary-light: #4a044e;
+            --bg-color: #0b0618;
+            --container-bg: #170d30;
+            --text-main: #f5f3ff;
+            --text-secondary: #a8a3cf;
+            --border-color: #33215e;
+            --tab-bg: rgba(23, 13, 48, 0.92);
+            --status-libre-bg: #251747;
+            --status-supervisor-bg: #0d9488;
+        }
+        html[data-theme="ocean"] {
+            --primary: #0369a1;
+            --primary-light: #e0f2fe;
+            --bg-color: #ecfeff;
+            --container-bg: #ffffff;
+            --text-main: #0c4a6e;
+            --text-secondary: #4b7590;
+            --border-color: #bae6fd;
+            --tab-bg: rgba(255, 255, 255, 0.88);
+            --status-libre-bg: #e0f2fe;
+            --status-supervisor-bg: #0f766e;
+        }
+        html[data-theme="dark"], html[data-theme="amoled"], html[data-theme="neon"] { color-scheme: dark; }
+        html[data-theme="neon"] .day.status-supervisor { box-shadow: 0 0 12px rgba(45, 212, 191, 0.55); }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
@@ -187,7 +233,6 @@
             border: none; border-radius: 50px; padding: 4px 14px; font-size: 0.75rem; font-weight: 700;
             background: var(--primary-light); color: var(--primary); cursor: pointer; font-family: inherit;
         }
-        body.dark-mode .today-btn { background: #312e81; color: #c7d2fe; }
 
         .period-card { margin-top: 20px; }
         .period-card h3 { margin: 0 0 12px; font-size: 1rem; }
@@ -216,8 +261,30 @@
         #lock-screen.hidden { display: none; }
         .brand-logo { display: inline-block; border-radius: 18px; padding: 6px; line-height: 0; }
         .brand-logo img { display: block; height: auto; }
-        /* Las letras de la marca son oscuras: en modo oscuro va sobre un fondo claro para que se lean. */
-        body.dark-mode .brand-logo { background: #f8fafc; }
+        /* Logo: versión normal en temas claros y versión aclarada (cpn-marca-oscuro.png) en temas oscuros. */
+        .brand-logo .logo-dark { display: none; }
+        html[data-theme="dark"] .brand-logo .logo-light,
+        html[data-theme="amoled"] .brand-logo .logo-light,
+        html[data-theme="neon"] .brand-logo .logo-light { display: none; }
+        html[data-theme="dark"] .brand-logo .logo-dark,
+        html[data-theme="amoled"] .brand-logo .logo-dark,
+        html[data-theme="neon"] .brand-logo .logo-dark { display: block; }
+
+        /* --- Selector de tema --- */
+        #theme-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
+            display: none; align-items: flex-end; justify-content: center; z-index: 2000;
+        }
+        #theme-modal.show { display: flex; }
+        .theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; margin-bottom: 20px; }
+        .theme-option {
+            border-radius: var(--radius-md); padding: 12px; cursor: pointer; text-align: left;
+            border: 2px solid var(--border-color); font-family: inherit; font-weight: 700; font-size: 0.9rem;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .theme-option.active { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        .theme-swatches { display: flex; gap: 6px; }
+        .theme-swatches span { width: 22px; height: 22px; border-radius: 7px; }
         .lock-logo { margin-bottom: 10px; }
         .lock-logo img { width: 150px; }
         .footer-brand { text-align: center; color: var(--text-secondary); font-size: 0.7rem; margin-top: 24px; }
@@ -249,7 +316,7 @@
 
     <!-- Pantalla de bloqueo: visible desde el inicio para no mostrar datos antes del PIN -->
     <div id="lock-screen">
-        <div class="lock-logo brand-logo"><img src="icons/marca/cpn-marca.png" alt="Carlos P. Nauto Interactive" width="150" height="138"></div>
+        <div class="lock-logo brand-logo"><img class="logo-light" src="icons/marca/cpn-marca.png" alt="Carlos P. Nauto Interactive" width="150" height="138"><img class="logo-dark" src="icons/marca/cpn-marca-oscuro.png" alt="Carlos P. Nauto Interactive" width="150" height="138"></div>
         <h1 class="lock-title" id="lockTitle">Supervisión</h1>
         <div class="lock-msg" id="lockMsg">Cargando…</div>
         <div class="pin-dots" id="pinDots"></div>
@@ -263,7 +330,7 @@
             <div class="app-title">Supervisión</div>
             <div id="syncStatus" class="sync-status"><span class="sync-dot"></span><span id="syncText">Solo local</span></div>
         </div>
-        <button id="themeToggle" style="background:none; border:none; font-size: 1.5rem;">🌙</button>
+        <button id="themeToggle" style="background:none; border:none; font-size: 1.5rem; cursor:pointer;" aria-label="Elegir tema">🎨</button>
     </header>
 
     <main>
@@ -302,6 +369,10 @@
 
         <div id="config-section" class="section-container">
             <div class="card">
+                <h3 style="margin-top:0">Apariencia</h3>
+                <button id="openThemeBtn" class="btn btn-secondary" style="margin-top:0">🎨 Cambiar tema</button>
+            </div>
+            <div class="card">
                 <h3 style="margin-top:0">Seguridad</h3>
                 <p class="help">La app pide tu PIN al abrirse y tras 1 minuto en segundo plano. Sin el PIN no se puede ver ni modificar ningún dato.</p>
                 <button id="bioToggleBtn" class="btn btn-secondary" style="display:none">Activar huella / rostro</button>
@@ -321,7 +392,7 @@
         </div>
 
         <div class="footer-brand">
-            <div class="brand-logo"><img src="icons/marca/cpn-marca.png" alt="Carlos P. Nauto Interactive" width="96" height="89"></div>
+            <div class="brand-logo"><img class="logo-light" src="icons/marca/cpn-marca.png" alt="Carlos P. Nauto Interactive" width="96" height="89"><img class="logo-dark" src="icons/marca/cpn-marca-oscuro.png" alt="Carlos P. Nauto Interactive" width="96" height="89"></div>
             <div style="margin-top:6px">Carlos P. Nauto Interactive® 2026</div>
         </div>
     </main>
@@ -340,6 +411,14 @@
             <span>Datos</span>
         </a>
     </nav>
+
+    <div id="theme-modal">
+        <div class="modal-content">
+            <h2 style="margin-top:0">Tema</h2>
+            <div id="themeGrid" class="theme-grid"></div>
+            <button id="closeThemeBtn" class="btn btn-secondary" style="margin-top:0">Cerrar</button>
+        </div>
+    </div>
 
     <div id="day-editor-modal">
         <div class="modal-content">
@@ -709,11 +788,42 @@
             showToast(await copyText(out) ? 'Informe Copiado' : 'Informe generado (cópialo manualmente)');
         };
 
-        document.getElementById('themeToggle').onclick = () => {
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            document.getElementById('themeToggle').textContent = isDark ? '☀️' : '🌙';
+        // --- TEMAS ---
+        const THEMES = [
+            { id: 'light',  name: 'Claro',   colors: ['#f8fafc', '#4f46e5', '#15803d'] },
+            { id: 'dark',   name: 'Oscuro',  colors: ['#0f172a', '#818cf8', '#16a34a'] },
+            { id: 'amoled', name: 'AMOLED',  colors: ['#000000', '#a5b4fc', '#16a34a'] },
+            { id: 'neon',   name: 'Neón CPN', colors: ['#0b0618', '#e879f9', '#0d9488'] },
+            { id: 'ocean',  name: 'Océano',  colors: ['#ecfeff', '#0369a1', '#0f766e'] }
+        ];
+
+        function applyTheme(id) {
+            const theme = THEMES.find(t => t.id === id) || THEMES[0];
+            document.documentElement.dataset.theme = theme.id;
+            document.querySelector('meta[name="theme-color"]').content = theme.colors[0];
+            try { localStorage.setItem('theme', theme.id); } catch (e) {}
+            renderThemeGrid();
+        }
+
+        function renderThemeGrid() {
+            const current = document.documentElement.dataset.theme;
+            document.getElementById('themeGrid').innerHTML = THEMES.map(t => `
+                <button class="theme-option ${t.id === current ? 'active' : ''}" data-theme-id="${t.id}"
+                        style="background:${t.colors[0]}; color:${['light', 'ocean'].includes(t.id) ? '#1e293b' : '#f1f5f9'}">
+                    <span class="theme-swatches">${t.colors.map(c => `<span style="background:${c}; border:1px solid rgba(128,128,128,0.4)"></span>`).join('')}</span>
+                    ${t.name}${t.id === current ? ' ✓' : ''}
+                </button>`).join('');
+        }
+
+        const openThemes = () => { renderThemeGrid(); document.getElementById('theme-modal').classList.add('show'); };
+        const closeThemes = () => document.getElementById('theme-modal').classList.remove('show');
+        document.getElementById('themeToggle').onclick = openThemes;
+        document.getElementById('openThemeBtn').onclick = openThemes;
+        document.getElementById('closeThemeBtn').onclick = closeThemes;
+        document.getElementById('theme-modal').onclick = (e) => { if (e.target.id === 'theme-modal') closeThemes(); };
+        document.getElementById('themeGrid').onclick = (e) => {
+            const btn = e.target.closest('[data-theme-id]');
+            if (btn) applyTheme(btn.dataset.themeId);
         };
 
         document.getElementById('syncStatus').onclick = () => syncNow({ silent: false });
@@ -1060,10 +1170,7 @@
 
         // --- INICIO ---
         (function init() {
-            if (localStorage.getItem('theme') === 'dark') {
-                document.body.classList.add('dark-mode');
-                document.getElementById('themeToggle').textContent = '☀️';
-            }
+            applyTheme(document.documentElement.dataset.theme);
             const mSelect = document.getElementById('reportMonth');
             monthNames.forEach((name, i) => mSelect.add(new Option(name, i)));
             // Por defecto el periodo que contiene hoy (16 → 15).
